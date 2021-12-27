@@ -2,10 +2,9 @@ package com.neuexample.streaming
 
 
 import com.alibaba.fastjson.{JSON, JSONObject}
-import com.neuexample.utils.CommonFuncs._
 import org.apache.spark.streaming.dstream.DStream
 
-object SgmwStreaming {
+object Sgmw {
 
 
   def addSgmwApi(persistsParts: DStream[String]): DStream[String]={

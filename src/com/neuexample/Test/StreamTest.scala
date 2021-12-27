@@ -1,7 +1,6 @@
 package com.neuexample.Test
 
 import com.alibaba.fastjson.{JSON, JSONObject}
-import com.neuexample.streaming.WarningSteaming.properties
 import com.neuexample.utils.CommonFuncs.locateCityRDD
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.SparkSession
@@ -10,10 +9,13 @@ import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import com.neuexample.utils.CommonFuncs._
+import com.neuexample.utils.GetConfig
 
 object StreamTest {
 
   def main(args: Array[String]): Unit = {
+
+    val properties = GetConfig.getProperties("test.properties")
 
     val spark = SparkSession
       .builder

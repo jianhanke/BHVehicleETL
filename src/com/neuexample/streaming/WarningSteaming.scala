@@ -7,38 +7,27 @@ import org.apache.spark.streaming.{Seconds, State, StateSpec, StreamingContext}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, ConsumerStrategies, HasOffsetRanges, KafkaUtils, LocationStrategies, OffsetRange}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.streaming.dstream.{DStream, MapWithStateDStream}
-import java.sql.{Connection, DriverManager, ResultSet}
 
 import scala.collection.mutable.ArrayBuffer
-import com.neuexample.utils.GetConfig
 import com.neuexample.utils.CommonFuncs._
-import com.neuexample.streaming.ParseHandle._
 import org.apache.spark.storage.StorageLevel
 import java.util.Properties
 
-import com.neuexample.streaming.GeelyStreaming._
-import com.neuexample.streaming.SgmwStreaming._
+import com.neuexample.streaming.Geely._
+import com.neuexample.streaming.Sgmw._
+import com.neuexample.utils.GetConfig
+import com.neuexample.utils.GetConfig._
 import org.apache.log4j.{Logger, PropertyConfigurator}
+import org.apache.spark.broadcast.Broadcast
 
 
 object WarningSteaming  extends Serializable{
 
-
-  //alarm监控列表
-  val alarms = "batteryHighTemperature,socJump,socNotBalance,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage"
-  val alarmSet:Set[String] = alarms.split(",").toSet
-  val properties = GetConfig.getProperties("test.properties")
 //   PropertyConfigurator.configure("log4j.properties")
 
-  //创建mysql连接
-  def getMysqlConn(properties :Properties) :Connection={
-    Class.forName("com.mysql.cj.jdbc.Driver")
-    //获取mysql连接
-    val conn: Connection = DriverManager.getConnection(properties.getProperty("mysql.conn"), properties.getProperty("mysql.user"), properties.getProperty("mysql.passwd"))
-    conn
-  }
-
   def  main(args: Array[String]) {
+
+    val properties = GetConfig.getProperties("test.properties")
 
     val spark = SparkSession
       .builder
@@ -74,7 +63,14 @@ object WarningSteaming  extends Serializable{
       ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams)
     )
 
+
+
     val df_gps_bc = ssc.sparkContext.broadcast(df_gps.collect())
+
+    //alarm监控列表
+    val alarms = "batteryHighTemperature,socJump,socNotBalance,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage"
+    val alarmSet:Set[String] = alarms.split(",").toSet
+    val bc_alarmSet: Broadcast[Set[String]] = ssc.sparkContext.broadcast(alarmSet)
 
     def parseCity(jsonstr:String) :String ={
       val jsonobject :JSONObject = JSON.parseObject(jsonstr)
@@ -104,7 +100,7 @@ object WarningSteaming  extends Serializable{
       .map{
         line=>{
           val json: JSONObject = JSON.parseObject(line)
-          for(alarm_column <- alarmSet) {
+          for(alarm_column <- bc_alarmSet.value) {
               json.put(alarm_column,0);
           }
           json.toString
@@ -134,9 +130,9 @@ object WarningSteaming  extends Serializable{
           var alarms = new ArrayBuffer[((String,String),Alarm)]()
           iterable.foreach( line => {
 
-            val cityStr = parseCity(line)
-            for(alarm_column <- alarmSet) {
-              val this_alarm = parseAlarm(line, alarm_column,cityStr)
+            for(alarm_column <- bc_alarmSet.value) {
+              // println(alarm_column)
+              val this_alarm = parseAlarm(line, alarm_column,parseCity(line))
              if (this_alarm.alarm_val != 0) {
               alarms.append(((this_alarm.vin, this_alarm.alarm_type), this_alarm))
              }
@@ -174,7 +170,6 @@ object WarningSteaming  extends Serializable{
           if( cur_alarm.alarm_type.equals("abnormalTemperature") || cur_alarm.alarm_type.equals("abnormalVoltage") ){
 
             cur_alarm.level=cur_alarm.level + last_alarm.level;
-            println(cur_alarm.alarm_type+","+cur_alarm.level);
             if(cur_alarm.level==5){
               state.remove()
               (cur_alarm, true);
@@ -217,7 +212,7 @@ object WarningSteaming  extends Serializable{
                       , record._1.province
                       , record._1.region
                       , record._1.level
-                      , record._1.vehicle_factory,
+                      , record._1.vehicleFactory,
                         record._1.chargeStatus,
                       record._1.mileage,
                       record._1.voltage,
@@ -236,7 +231,7 @@ object WarningSteaming  extends Serializable{
                       record._1.temperature_uppder_boundary:Double,record._1.temperature_down_boundary:Double,
                       record._1.soc_notbalance_time,record._1.soc_high_time
                     )
-                  // println(insert_sql);
+                   println(insert_sql);
                   conn.prepareStatement(insert_sql).executeUpdate()
                 }
 
@@ -264,6 +259,48 @@ object WarningSteaming  extends Serializable{
     ssc.start()
     ssc.awaitTermination()
     ssc.stop(true,true)
+  }
+
+
+  def parseAlarm(jsonstr:String,alarm_type :String,cityStr :String) :Alarm ={
+    val json :JSONObject = JSON.parseObject(jsonstr)
+
+
+    val vehicleFactory: Int = json.getInteger("vehicleFactory")
+    var level = json.getInteger("level")
+
+    if (vehicleFactory == 5 ||  vehicleFactory == 1  ) { // 只处理吉利车
+      level=json.getInteger(alarm_type);
+    }
+    //告警等级
+    if (level != null && level > 0 && level < 4 ){
+
+    }else{
+      level = 1
+    }
+
+
+    val ctime = mkctime(json.getInteger("year")
+      ,json.getInteger("month")
+      ,json.getInteger("day")
+      ,json.getInteger("hours")
+      ,json.getInteger("minutes")
+      ,json.getInteger("seconds"))
+
+    json.put("ctime",ctime);
+    json.put("alarm_type",alarm_type);
+    json.put("alarm_val",json.getIntValue(alarm_type))
+    json.put("level",level);
+    //var isSendAlarm:Int = if(jsonobject.containsKey(alarm_type)) jsonobject.getInteger(alarm_type) else 0;
+
+
+    val cityArray: Array[String] = cityStr.split(",")
+    json.put("area",cityArray(0));
+    json.put("city",cityArray(1));
+    json.put("province",cityArray(2));
+    json.put("region",cityArray(3));
+
+    JSON.toJavaObject(json,classOf[Alarm])
   }
 
 

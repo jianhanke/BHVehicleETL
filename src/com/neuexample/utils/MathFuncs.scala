@@ -1,7 +1,6 @@
-package com.neuexample.streaming
+package com.neuexample.utils
 
-
-object MathFormula {
+object MathFuncs {
 
   val socvoltageArray = Array(
     Array(4176,4118,4063,4009,3958,3908,3861,3816,3774,3731,3693,3672,3655,3641,3624,3598,3567,3532,3494,3440,3317),

@@ -1,6 +1,7 @@
 package com.neuexample.etl
 
-import com.neuexample.streaming.WarningSteaming.properties
+
+import com.neuexample.utils.GetConfig
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 
@@ -8,6 +9,8 @@ object TextRead {
 
 
   def main(args: Array[String]): Unit = {
+
+    val properties = GetConfig.getProperties("test.properties")
     val spark = SparkSession
       .builder
       .master(properties.getProperty("spark.master"))

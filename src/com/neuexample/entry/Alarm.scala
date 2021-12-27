@@ -1,67 +1,259 @@
 package com.neuexample.entry
 
-class Alarm(vinx :String,ctimex :Long,alarm_typex :String ,alarm_valx :Int,areax :String,cityx :String,provincex :String,regionx :String,levelx :Int,vehicle_factoryx:Int,
-  chargeStatusx:Int,mileagex:Long,voltagex:Int,currentx:Int,socx:Int,dcStatusx:Int,insulationResistancex:Int,maxVoltageSystemNumx:Int,
-            maxVoltagebatteryNumx:Int,batteryMaxVoltagex:Int ,minVoltageSystemNumx:Int,minVoltagebatteryNumx:Int,
-            batteryMinVoltagex:Int,maxTemperatureSystemNumx:Int,maxTemperatureNumx:Int,maxTemperaturex:Int,minTemperatureSystemNumx:Int,
-            minTemperatureNumx:Int,minTemperaturex:Int,temperatureProbeCountx:Int,probeTemperaturesx:String,cellCountx:Int,cellVoltagesx:String,
-            total_voltage_drop_ratex:Double,max_temperature_heating_ratex:Double,soc_high_valuex:Double,soc_diff_valuex:Double,
-            soc_jump_valuex:Double,soc_jump_timex:Int,battery_standing_timex:Int,temperature_diffx:Int,insulation_om_vx:Double,
-            voltage_uppder_boundaryx:Double,voltage_down_boundaryx:Double,temperature_uppder_boundaryx:Double,temperature_down_boundaryx:Double,
-            soc_notbalance_timex:Int,soc_high_timex:Int
-           ) extends  Serializable {
-  val vin :String = vinx
-  var start_time: Long = ctimex
-  var ctime: Long = ctimex
-  val alarm_type :String = alarm_typex
-  val alarm_val :Int = alarm_valx
-  val area :String = areax
-  val city :String = cityx
-  val province :String = provincex
-  val region :String = regionx
-  var level :Int = levelx
-  var last_start_time: Long = ctimex
-  var end_time: Long = ctime
-  val vehicle_factory:Int = vehicle_factoryx
 
-  val chargeStatus:Int=chargeStatusx
-  val mileage:Long=mileagex
-  val voltage:Int=voltagex
-  val current:Int=currentx
-  val soc:Int=socx
-  val dcStatus:Int=dcStatusx
-  val insulationResistance:Int=insulationResistancex
-  val maxVoltageSystemNum:Int=maxVoltageSystemNumx
-  val maxVoltagebatteryNum:Int=maxVoltagebatteryNumx
-  val batteryMaxVoltage:Int=batteryMaxVoltagex
-  val minVoltageSystemNum:Int=minVoltageSystemNumx
-  val minVoltagebatteryNum:Int=minVoltagebatteryNumx
-  val batteryMinVoltage:Int=batteryMinVoltagex
-  val maxTemperatureSystemNum:Int=maxTemperatureSystemNumx
-  val maxTemperatureNum:Int=maxTemperatureNumx
-  val maxTemperature:Int=maxTemperaturex
-  val minTemperatureSystemNum:Int=minTemperatureSystemNumx
-  val minTemperatureNum:Int=minTemperatureNumx
-  val minTemperature:Int=minTemperaturex
-  val temperatureProbeCount:Int=temperatureProbeCountx
-  val probeTemperatures:String=probeTemperaturesx
-  val cellCount:Int=cellCountx
-  val cellVoltages:String=cellVoltagesx
+class Alarm() extends  Serializable {
 
-  val total_voltage_drop_rate:Double=total_voltage_drop_ratex
-  val max_temperature_heating_rate:Double=max_temperature_heating_ratex
-  val soc_high_value:Double=soc_high_valuex
-  val soc_diff_value:Double=soc_diff_valuex
-  val soc_jump_value:Double=soc_jump_valuex
-  val soc_jump_time:Int=soc_jump_timex
-  val battery_standing_time:Int=battery_standing_timex
-  val temperature_diff:Int=temperature_diffx
-  val insulation_om_v:Double=insulation_om_vx
-  val voltage_uppder_boundary:Double=voltage_uppder_boundaryx
-  val voltage_down_boundary:Double=voltage_down_boundaryx
-  val temperature_uppder_boundary:Double=temperature_uppder_boundaryx
-  val temperature_down_boundary:Double=temperature_down_boundaryx
-  val soc_notbalance_time:Int=soc_notbalance_timex;
-  val soc_high_time:Int=soc_high_timex;
+  var vin:String =  ""
+  var start_time:Long = 0
+  var ctime:Long = 0
+  var alarm_type:String =  ""
+  var alarm_val:Int = 0
+  var area:String =  ""
+  var city:String =  ""
+  var province:String =  ""
+  var region:String =  ""
+  var level:Int = 0
+  var last_start_time:Long = 0
+  var end_time:Long = 0
+  var vehicleFactory:Int = 0
+
+  var chargeStatus:Int = 0
+  var mileage:Long = 0
+  var voltage:Int = 0
+  var current:Int = 0
+  var soc:Int = 0
+  var dcStatus:Int = 0
+  var insulationResistance:Int = 0
+  var maxVoltageSystemNum:Int = 0
+  var maxVoltagebatteryNum:Int = 0
+  var batteryMaxVoltage:Int = 0
+  var minVoltageSystemNum:Int = 0
+  var minVoltagebatteryNum:Int = 0
+  var batteryMinVoltage:Int = 0
+  var maxTemperatureSystemNum:Int = 0
+  var maxTemperatureNum:Int = 0
+  var maxTemperature:Int = 0
+  var minTemperatureSystemNum:Int = 0
+  var minTemperatureNum:Int = 0
+  var minTemperature:Int = 0
+  var temperatureProbeCount:Int = 0
+  var probeTemperatures:String =  ""
+  var cellCount:Int = 0
+  var cellVoltages:String =  ""
+
+  var total_voltage_drop_rate:Double = 0
+  var max_temperature_heating_rate:Double = 0
+  var soc_high_value:Double = 0
+  var soc_diff_value:Double = 0
+  var soc_jump_value:Double = 0
+  var soc_jump_time:Int = 0
+  var battery_standing_time:Int = 0
+  var temperature_diff:Int = 0
+  var insulation_om_v:Double = 0
+  var voltage_uppder_boundary:Double = 0
+  var voltage_down_boundary:Double = 0
+  var temperature_uppder_boundary:Double = 0
+  var temperature_down_boundary:Double = 0
+  var soc_notbalance_time:Int = 0
+  var soc_high_time:Int = 0
+
+
+  def setVin(vin: String): Unit = {
+    this.vin = vin
+  }
+
+
+  def setCtime(ctime: Long): Unit = {
+    this.ctime = ctime
+    this.start_time = ctime
+    this.last_start_time = ctime
+    this.end_time = ctime
+  }
+
+  def setAlarm_type(alarm_type: String): Unit = {
+    this.alarm_type = alarm_type
+  }
+
+  def setAlarm_val(alarm_val: Int): Unit = {
+    this.alarm_val = alarm_val
+  }
+
+  def setArea(area: String): Unit = {
+    this.area = area
+  }
+
+  def setCity(city: String): Unit = {
+    this.city = city
+  }
+
+  def setProvince(province: String): Unit = {
+    this.province = province
+  }
+
+  def setRegion(region: String): Unit = {
+    this.region = region
+  }
+
+  def setLevel(level: Int): Unit = {
+    this.level = level
+  }
+
+
+
+  def setVehicleFactory(vehicleFactory: Int): Unit = {
+    this.vehicleFactory = vehicleFactory
+  }
+
+  def setChargeStatus(chargeStatus: Int): Unit = {
+    this.chargeStatus = chargeStatus
+  }
+
+  def setMileage(mileage: Long): Unit = {
+    this.mileage = mileage
+  }
+
+  def setVoltage(voltage: Int): Unit = {
+    this.voltage = voltage
+  }
+
+  def setCurrent(current: Int): Unit = {
+    this.current = current
+  }
+
+  def setSoc(soc: Int): Unit = {
+    this.soc = soc
+  }
+
+  def setDcStatus(dcStatus: Int): Unit = {
+    this.dcStatus = dcStatus
+  }
+
+  def setInsulationResistance(insulationResistance: Int): Unit = {
+    this.insulationResistance = insulationResistance
+  }
+
+  def setMaxVoltageSystemNum(maxVoltageSystemNum: Int): Unit = {
+    this.maxVoltageSystemNum = maxVoltageSystemNum
+  }
+
+  def setMaxVoltagebatteryNum(maxVoltagebatteryNum: Int): Unit = {
+    this.maxVoltagebatteryNum = maxVoltagebatteryNum
+  }
+
+  def setBatteryMaxVoltage(batteryMaxVoltage: Int): Unit = {
+    this.batteryMaxVoltage = batteryMaxVoltage
+  }
+
+  def setMinVoltageSystemNum(minVoltageSystemNum: Int): Unit = {
+    this.minVoltageSystemNum = minVoltageSystemNum
+  }
+
+  def setMinVoltagebatteryNum(minVoltagebatteryNum: Int): Unit = {
+    this.minVoltagebatteryNum = minVoltagebatteryNum
+  }
+
+  def setBatteryMinVoltage(batteryMinVoltage: Int): Unit = {
+    this.batteryMinVoltage = batteryMinVoltage
+  }
+
+  def setMaxTemperatureSystemNum(maxTemperatureSystemNum: Int): Unit = {
+    this.maxTemperatureSystemNum = maxTemperatureSystemNum
+  }
+
+  def setMaxTemperatureNum(maxTemperatureNum: Int): Unit = {
+    this.maxTemperatureNum = maxTemperatureNum
+  }
+
+  def setMaxTemperature(maxTemperature: Int): Unit = {
+    this.maxTemperature = maxTemperature
+  }
+
+  def setMinTemperatureSystemNum(minTemperatureSystemNum: Int): Unit = {
+    this.minTemperatureSystemNum = minTemperatureSystemNum
+  }
+
+  def setMinTemperatureNum(minTemperatureNum: Int): Unit = {
+    this.minTemperatureNum = minTemperatureNum
+  }
+
+  def setMinTemperature(minTemperature: Int): Unit = {
+    this.minTemperature = minTemperature
+  }
+
+  def setTemperatureProbeCount(temperatureProbeCount: Int): Unit = {
+    this.temperatureProbeCount = temperatureProbeCount
+  }
+
+  def setProbeTemperatures(probeTemperatures: String): Unit = {
+    this.probeTemperatures = probeTemperatures
+  }
+
+  def setCellCount(cellCount: Int): Unit = {
+    this.cellCount = cellCount
+  }
+
+  def setCellVoltages(cellVoltages: String): Unit = {
+    this.cellVoltages = cellVoltages
+  }
+
+  def setTotal_voltage_drop_rate(total_voltage_drop_rate: Double): Unit = {
+    this.total_voltage_drop_rate = total_voltage_drop_rate
+  }
+
+  def setMax_temperature_heating_rate(max_temperature_heating_rate: Double): Unit = {
+    this.max_temperature_heating_rate = max_temperature_heating_rate
+  }
+
+  def setSoc_high_value(soc_high_value: Double): Unit = {
+    this.soc_high_value = soc_high_value
+  }
+
+  def setSoc_diff_value(soc_diff_value: Double): Unit = {
+    this.soc_diff_value = soc_diff_value
+  }
+
+  def setSoc_jump_value(soc_jump_value: Double): Unit = {
+    this.soc_jump_value = soc_jump_value
+  }
+
+  def setSoc_jump_time(soc_jump_time: Int): Unit = {
+    this.soc_jump_time = soc_jump_time
+  }
+
+  def setBattery_standing_time(battery_standing_time: Int): Unit = {
+    this.battery_standing_time = battery_standing_time
+  }
+
+  def setTemperature_diff(temperature_diff: Int): Unit = {
+    this.temperature_diff = temperature_diff
+  }
+
+  def setInsulation_om_v(insulation_om_v: Double): Unit = {
+    this.insulation_om_v = insulation_om_v
+  }
+
+  def setVoltage_uppder_boundary(voltage_uppder_boundary: Double): Unit = {
+    this.voltage_uppder_boundary = voltage_uppder_boundary
+  }
+
+  def setVoltage_down_boundary(voltage_down_boundary: Double): Unit = {
+    this.voltage_down_boundary = voltage_down_boundary
+  }
+
+  def setTemperature_uppder_boundary(temperature_uppder_boundary: Double): Unit = {
+    this.temperature_uppder_boundary = temperature_uppder_boundary
+  }
+
+  def setTemperature_down_boundary(temperature_down_boundary: Double): Unit = {
+    this.temperature_down_boundary = temperature_down_boundary
+  }
+
+  def setSoc_notbalance_time(soc_notbalance_time: Int): Unit = {
+    this.soc_notbalance_time = soc_notbalance_time
+  }
+
+  def setSoc_high_time(soc_high_time: Int): Unit = {
+    this.soc_high_time = soc_high_time
+  }
 
 }

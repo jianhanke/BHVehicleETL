@@ -3,13 +3,13 @@ package com.neuexample.streaming
 
 import java.lang
 import com.alibaba.fastjson.{JSON, JSONObject}
-import com.neuexample.streaming.MathFormula._
-import com.neuexample.streaming.WarningSteaming.{getMysqlConn, properties}
+import com.neuexample.utils.MathFuncs._
+
 import com.neuexample.utils.CommonFuncs.{mkctime, _}
 import org.apache.spark.streaming.{State, StateSpec}
 import org.apache.spark.streaming.dstream.{DStream, MapWithStateDStream}
 
-object GeelyStreaming {
+object Geely {
 
 
   val func_state_geely=( key:String,values:Option[JSONObject],state:State[JSONObject] )=>{
@@ -17,6 +17,8 @@ object GeelyStreaming {
 
     val old_obj: JSONObject = state.getOption().getOrElse(null)
     val obj: JSONObject = values.get
+
+
 
 //    if(old_obj!=null) {
 //      println("curTime:" + obj.getInteger("timeStamp") + ",lastTime:" + old_obj.getInteger("timeStamp") + ",diff:" + (
@@ -422,24 +424,24 @@ object GeelyStreaming {
 
 
 
-  def insertSqlError(str:String,vin:String): Unit ={
-
-
-        val conn = getMysqlConn(properties)
-       try{
-
-         var sql=" insert into test_error (vin,error_text) values('%s','%s')".format(vin,str);
-         conn.prepareStatement(sql).executeUpdate()
-       }catch {
-         case ex: Exception => {
-           System.err.println("Process one data error, but program will continue! ", ex)
-         }
-       }
-       finally{
-         conn.close()
-       }
-
-  }
+//  def insertSqlError(str:String,vin:String): Unit ={
+//
+//
+//        val conn = getMysqlConn(properties)
+//       try{
+//
+//         var sql=" insert into test_error (vin,error_text) values('%s','%s')".format(vin,str);
+//         conn.prepareStatement(sql).executeUpdate()
+//       }catch {
+//         case ex: Exception => {
+//           System.err.println("Process one data error, but program will continue! ", ex)
+//         }
+//       }
+//       finally{
+//         conn.close()
+//       }
+//
+//  }
 
 
 }
