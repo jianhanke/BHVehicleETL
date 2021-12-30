@@ -186,7 +186,7 @@ object Geely {
     if(totalVoltage!=null && totalVoltage >= 100000 && totalVoltage <= 500000
       && old_totalVoltage!=null && old_totalVoltage >= 100000 && old_totalVoltage <= 500000
       && insulationResistance!=null && insulationResistance/(totalVoltage/1000.0) < 500
-      && secondsDiff>=10 &&  secondsDiff <=15
+      && secondsDiff> 0 &&  secondsDiff <= 15
       &&  (totalVoltage-old_totalVoltage)/1000.0 /secondsDiff > 0.05 )
     {
       json.put("electricBoxWithWater",1);
@@ -256,6 +256,7 @@ object Geely {
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val insulationResistance: Integer = json.getInteger("insulationResistance")
 
+    json.put("insulation",0);    // 去掉车厂发过来的绝缘值
     if(insulationResistance!=null && totalVoltage!=null && minCellVoltage!=null && minCellVoltage <= 1800 ){
 
       if(insulationResistance/(totalVoltage/1000.0) < 100  ){
