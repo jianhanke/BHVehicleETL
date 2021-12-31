@@ -203,14 +203,14 @@ object WarningSteaming  extends Serializable{
               partitions.foreach(record => {
                 //插入
                 if(record._2 == true) {
-                  val insert_sql = "insert into app_alarm_divide_dwd(uuid,vin,start_time,alarm_type,end_time,area,city,province,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                  val insert_sql = "insert into app_alarm_divide_dwd(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                     .format(record._1.vin
                       , record._1.start_time
                       , record._1.alarm_type
                       , record._1.ctime
-                      , record._1.area
                       , record._1.city
                       , record._1.province
+                      , record._1.area
                       , record._1.region
                       , record._1.level
                       , record._1.vehicleFactory,
@@ -296,11 +296,13 @@ object WarningSteaming  extends Serializable{
     //var isSendAlarm:Int = if(jsonobject.containsKey(alarm_type)) jsonobject.getInteger(alarm_type) else 0;
 
 
+    // (i18n_内蒙古自治区,i18n_巴彦淖尔市,i18n_磴口县,north,1.8326636882091768E7)
     val cityArray: Array[String] = cityStr.split(",")
-    json.put("area",cityArray(0));
+    json.put("province",cityArray(0));
     json.put("city",cityArray(1));
-    json.put("province",cityArray(2));
+    json.put("area",cityArray(2));
     json.put("region",cityArray(3));
+
 
     JSON.toJavaObject(json,classOf[Alarm])
   }
