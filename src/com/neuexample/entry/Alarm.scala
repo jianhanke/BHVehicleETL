@@ -57,18 +57,39 @@ class Alarm() extends  Serializable {
   var soc_notbalance_time:Int = 0
   var soc_high_time:Int = 0
 
+  var last_alarm_time:Long = 0
+  var longitude:Long = 0
+  var latitude:Long = 0
+
 
   def setVin(vin: String): Unit = {
     this.vin = vin
+  }
+
+  def setLongitude(longitude: Long): Unit ={
+    this.longitude = longitude
+  }
+
+  def setLatitude(latitude: Long): Unit ={
+    this.latitude = latitude
   }
 
 
   def setCtime(ctime: Long): Unit = {
     this.ctime = ctime
     this.start_time = ctime
-    this.last_start_time = ctime
     this.end_time = ctime
   }
+
+  def setLast_start_time(last_start_time: Long): Unit ={
+    this.last_start_time = last_start_time
+  }
+
+  def setLast_alarm_time(last_alarm_time: Long): Unit ={
+    this.last_alarm_time = last_alarm_time
+  }
+
+
 
   def setAlarm_type(alarm_type: String): Unit = {
     this.alarm_type = alarm_type

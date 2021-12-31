@@ -39,6 +39,7 @@ object Geely {
 
   def addGeelyApi(persistsParts: DStream[String]): DStream[String]={
 
+    println("geely come")
     val geelyVin2Json: DStream[(String, JSONObject)] = addGeelyAlarm(persistsParts)
     geelyVin2Json.mapWithState(StateSpec.function(func_state_geely))
 
@@ -143,6 +144,7 @@ object Geely {
       json.put("current",math.abs(current));
       json.put("soc_jump_time",timeStamp-old_timeStamp)
       json.put("current",current);
+      json.put("last_start_time",old_timeStamp)
     }
   }
 
@@ -154,6 +156,7 @@ object Geely {
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
     val totalVoltage: Integer = json.getInteger("totalVoltage")
+    val old_timeStamp: Integer = old_json.getInteger("timeStamp")
 
     if(batteryMaxVoltage!=null && batteryMinVoltage!=null && totalVoltage!=null  && batteryMaxVoltage-batteryMinVoltage >= 400
       && insulationResistance!=null && insulationResistance/(totalVoltage/1000.0) <= 500 && maxTemperature!=null && old_maxTemperature!=null )
@@ -162,12 +165,15 @@ object Geely {
         if(  temperatureDiff>30   ){     //删除87度
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",3);
+          json.put("last_start_time",old_timeStamp)
         }else if(  temperatureDiff>20 && temperatureDiff<=30   ){
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",2);
+          json.put("last_start_time",old_timeStamp)
         }else if(  temperatureDiff>=15 && temperatureDiff<=20     ){
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",1);
+          json.put("last_start_time",old_timeStamp)
         }
       }
 
@@ -191,6 +197,7 @@ object Geely {
     {
       json.put("electricBoxWithWater",1);
       json.put("total_voltage_drop_rate",(totalVoltage-old_totalVoltage)/1000.0 /secondsDiff);
+      json.put("last_start_time",old_timeStamp)
     }
 
 
@@ -213,6 +220,7 @@ object Geely {
         json.put("socHigh", 1);
         json.put("soc_high_value", soc - socMax);
         json.put("soc_high_time", timeStamp - old_timeStamp)
+        json.put("last_start_time",old_timeStamp)
       }
     }
   }
@@ -235,6 +243,7 @@ object Geely {
         json.put("socNotBalance",1);
         json.put("soc_diff_value",socMax-socMin);
         json.put("soc_notbalance_time",timeStamp-old_timeStamp)
+        json.put("last_start_time",old_timeStamp)
       }
     }
   }
