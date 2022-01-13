@@ -162,7 +162,7 @@ object Geely {
       && insulationResistance!=null && insulationResistance/(totalVoltage/1000.0) <= 500 && maxTemperature!=null && old_maxTemperature!=null )
       {
         val temperatureDiff: Integer = math.abs(maxTemperature-old_maxTemperature)
-        if(  temperatureDiff>30   ){     //删除87度
+        if(  temperatureDiff>30 || maxTemperature==87   ){     //删除87度
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",3);
           json.put("last_start_time",old_timeStamp)

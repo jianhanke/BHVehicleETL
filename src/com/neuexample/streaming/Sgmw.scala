@@ -8,6 +8,7 @@ object Sgmw {
 
 
   def addSgmwApi(persistsParts: DStream[String]): DStream[String]={
+      println("Sgmw is comeing")
       addSgmwAlarm(persistsParts);
   }
 

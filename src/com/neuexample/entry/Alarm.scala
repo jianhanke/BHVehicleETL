@@ -60,10 +60,15 @@ class Alarm() extends  Serializable {
   var last_alarm_time:Long = 0
   var longitude:Long = 0
   var latitude:Long = 0
+  var speed:Int = 0
 
 
   def setVin(vin: String): Unit = {
     this.vin = vin
+  }
+
+  def setSpeed(speed: Int): Unit ={
+    this.speed = speed
   }
 
   def setLongitude(longitude: Long): Unit ={
