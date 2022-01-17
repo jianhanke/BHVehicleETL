@@ -1,5 +1,4 @@
-package com.neuexample.etl
-
+package com.neuexample.Test
 
 import com.neuexample.utils.GetConfig
 import org.apache.spark.rdd.RDD

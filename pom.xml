@@ -17,6 +17,15 @@
         <log4j.version>1.2.17</log4j.version>
     </properties>
     <dependencies>
+
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-hive_2.11</artifactId>
+            <version>${spark.version}</version>
+            <!--<scope>provided</scope>-->
+        </dependency>
+
         <dependency>
             <groupId>com.crealytics</groupId>
             <artifactId>spark-excel_2.11</artifactId>
