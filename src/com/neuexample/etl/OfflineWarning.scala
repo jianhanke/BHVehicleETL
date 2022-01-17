@@ -6,13 +6,14 @@ import java.util.Properties
 
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.neuexample.entry.{Alarm, OfflineAlarm, Vehicle}
-import com.neuexample.utils.CommonFuncs.{ udf_mkctime,locateCityRDD}
+import com.neuexample.utils.CommonFuncs.{locateCityRDD, udf_mkctime}
 import com.neuexample.utils.GetConfig
 import com.neuexample.utils.GetConfig.getMysqlConn
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql._
+import org.apache.spark.sql.types.StringType
 
 object OfflineWarning {
 
@@ -52,14 +53,17 @@ object OfflineWarning {
 
        val result = isAbnormalInternalResistance(sourceDS)
 
+
+
     val value: DataFrame = result.withColumnRenamed("vehiclefactory", "vehicle_factory")
       .withColumn("start_time", col("ctime"))
       .withColumn("end_time", col("ctime"))
       .withColumn("probetemperatures",udf_list_toString(col("probetemperatures")))
       .withColumn("cellvoltages",udf_list_toString(col("cellvoltages")))
       .withColumn("locate", udf_parseCity(col("longitude"),col("latitude")) )
-      .select( "vin", "start_time", "alarm_type", "end_time","locate", "vehicle_factory", "chargeStatus", "mileage", "voltage", "current", "soc", "dcStatus", "insulationResistance", "maxVoltageSystemNum", "maxVoltagebatteryNum", "batteryMaxVoltage", "minVoltageSystemNum", "minVoltagebatteryNum", "batteryMinVoltage", "maxTemperatureSystemNum", "maxTemperatureNum", "maxTemperature", "minTemperatureSystemNum", "minTemperatureNum", "minTemperature", "temperatureProbeCount", "cellCount", "longitude", "latitude", "speed","probetemperatures","cellvoltages")
-      //.select( "vin", "start_time", "alarm_type", "end_time","province","city","area","region","vehicle_factory", "chargeStatus", "mileage", "voltage", "current", "soc", "dcStatus", "insulationResistance", "maxVoltageSystemNum", "maxVoltagebatteryNum", "batteryMaxVoltage", "minVoltageSystemNum", "minVoltagebatteryNum", "batteryMinVoltage", "maxTemperatureSystemNum", "maxTemperatureNum", "maxTemperature", "minTemperatureSystemNum", "minTemperatureNum", "minTemperature", "temperatureProbeCount", "cellCount", "longitude", "latitude", "speed","probetemperatures","cellvoltages")
+      .select( "vin", "start_time", "alarm_type", "level", "end_time","locate", "vehicle_factory", "chargeStatus", "mileage", "voltage", "current", "soc", "dcStatus", "insulationResistance", "maxVoltageSystemNum", "maxVoltagebatteryNum", "batteryMaxVoltage", "minVoltageSystemNum", "minVoltagebatteryNum", "batteryMinVoltage", "maxTemperatureSystemNum", "maxTemperatureNum", "maxTemperature", "minTemperatureSystemNum", "minTemperatureNum", "minTemperature", "temperatureProbeCount", "cellCount", "longitude", "latitude", "speed","probetemperatures","cellvoltages")
+
+
     value.printSchema()
 
     value.show(false)
@@ -81,12 +85,6 @@ object OfflineWarning {
 
 
     spark.stop()
-//    val value: Dataset[OfflineAlarm] = result.as[OfflineAlarm]
-//
-//   result.show(false)
-
-
-
   }
 
   /*
@@ -111,7 +109,7 @@ object OfflineWarning {
 
     val w2: WindowSpec = Window.partitionBy("vin" ).orderBy( col("ctime").desc).rowsBetween(-4,Window.currentRow)
 
-    val value: Dataset[Row] = sourceDS
+    sourceDS
       .withColumn("last_ctime", lag("ctime", 1) over w1)
       .withColumn("current_count", udf_current_count(col("current")))
       // .withColumn("last_current_count",lag("current_count",1) over w1)
@@ -119,16 +117,17 @@ object OfflineWarning {
       .withColumn("sum_current_count", sum("current_count") over w2)
       .withColumn("last_current", lag("current", 1) over w1)
       .withColumn("last_batterymaxvoltage", lag("batterymaxvoltage", 1) over w1)
-      .withColumn("alarm_type", udf_isAbnormalInternalResistance(col("sum_current_count"), col("current"), col("batterymaxvoltage"), col("last_current"), col("last_batterymaxvoltage")))
+      .withColumn("level", udf_isAbnormalInternalResistance(col("sum_current_count"), col("current"), col("batterymaxvoltage"), col("last_current"), col("last_batterymaxvoltage")))
       //.select("vin","ctime","last_ctime","current","current_count","sum_current_count","last_current","last_batterymaxvoltage","abnormalInternalResistance")
       .drop("last_ctime")
       .drop("current_count")
       .drop("sum_current_count")
       .drop("last_current")
       .drop("last_batterymaxvoltage")
-      .where("alarm_type = 'abnormalInternalResistance' ")
+      .where("level !=0  ")
+      .withColumn("alarm_type",lit("abnormalInternalResistance") )
 
-    value
+
   }
 
   val udf_list_toString=udf( (list:Seq[Long])=>{
@@ -146,13 +145,17 @@ object OfflineWarning {
     if(current_diff != 0){
       val value: Long = (batterymaxvoltage - last_batterymaxvoltage) / current_diff
       if(  sum_current_count == 5 &&   (value < -1.5 || value > -0.4)  ){
-          "abnormalInternalResistance"
+          1
       }else{
-         ""
+          0
       }
     }else{
-        ""
+          0
     }
+  } )
+
+  val udf_add_field=udf( (fileName:String)=>{
+        fileName
   } )
 
 

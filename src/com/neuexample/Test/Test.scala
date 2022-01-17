@@ -55,7 +55,7 @@ object Test {
       .withColumn("maxSalary", max("salary") over overCategory)
       .withColumn("sumSalary", sum("salary") over overCategory)
       .withColumn("dsaf",  col("salary"))
-      .drop("salary")
+
 
     val value: Dataset[Salary] = df.as[Salary]
     value.show(false)
@@ -82,12 +82,11 @@ object Test {
     val frame: DataFrame = empsalary.withColumn("fsdssalary", lead("salary", 2) over overCategory3)
       .withColumn("test", $"salary")
 
-    frame.foreach(  line=>{
-      val bool: Boolean = line.isNullAt(5)
-      println(bool)
 
-
-    })
+    frame
+        .withColumn("addFiled", lit("321") )
+        .where("fsdssalary is null ")
+      .show(false)
 
 
 
