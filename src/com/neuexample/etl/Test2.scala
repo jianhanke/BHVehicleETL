@@ -14,13 +14,12 @@ object Test2 {
       .master("local[*]")
       .getOrCreate()
 
+
     val df: DataFrame = spark.createDataFrame(
       Seq(
         (  "1", 1, "fs", 1, 1)
       )
     ).toDF( "vin", "start_time", "alarm_type", "end_time", "vehicle_factory")
-
-
 
 
 

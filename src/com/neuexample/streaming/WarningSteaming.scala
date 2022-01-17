@@ -19,6 +19,7 @@ import com.neuexample.utils.GetConfig
 import com.neuexample.utils.GetConfig._
 import org.apache.log4j.{Logger, PropertyConfigurator}
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.RDD
 
 
 object WarningSteaming  extends Serializable{

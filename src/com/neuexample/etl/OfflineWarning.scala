@@ -6,7 +6,7 @@ import java.util.Properties
 
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.neuexample.entry.{Alarm, OfflineAlarm, Vehicle}
-import com.neuexample.utils.CommonFuncs.{locateCityRDD, udf_mkctime}
+import com.neuexample.utils.CommonFuncs.{ udf_mkctime,locateCityRDD}
 import com.neuexample.utils.GetConfig
 import com.neuexample.utils.GetConfig.getMysqlConn
 import org.apache.spark.rdd.RDD
@@ -28,16 +28,13 @@ object OfflineWarning {
       .enableHiveSupport()
       .getOrCreate()
 
-//    spark.sparkContext.setLogLevel("ERROR")
-
-
-
-//     val df_gps: RDD[String] = spark.sparkContext.textFile("gps.csv")
-//    df_gps.cache()
-
-
-
     import spark.implicits._
+    spark.sparkContext.setLogLevel("ERROR")
+
+   val df_gps: Array[String] = spark.sparkContext.textFile("gps.csv").cache().collect()
+    val udf_parseCity = udf( (lon:Long,lat:Long)=>{
+         locateCityRDD(lon / 1000000, lat / 1000000, df_gps)
+    } )
 
 
     // val df: DataFrame = spark.sql("select count(*) from warehouse_gx.dwd_vehicle where yyyymmdd >= 20220111 and yyyymmdd < 20220112")
@@ -60,21 +57,18 @@ object OfflineWarning {
       .withColumn("end_time", col("ctime"))
       .withColumn("probetemperatures",udf_list_toString(col("probetemperatures")))
       .withColumn("cellvoltages",udf_list_toString(col("cellvoltages")))
-      .select( "vin", "start_time", "alarm_type", "end_time", "vehicle_factory", "chargeStatus", "mileage", "voltage", "current", "soc", "dcStatus", "insulationResistance", "maxVoltageSystemNum", "maxVoltagebatteryNum", "batteryMaxVoltage", "minVoltageSystemNum", "minVoltagebatteryNum", "batteryMinVoltage", "maxTemperatureSystemNum", "maxTemperatureNum", "maxTemperature", "minTemperatureSystemNum", "minTemperatureNum", "minTemperature", "temperatureProbeCount", "cellCount", "longitude", "latitude", "speed","probetemperatures","cellvoltages")
-
+      .withColumn("locate", udf_parseCity(col("longitude"),col("latitude")) )
+      .select( "vin", "start_time", "alarm_type", "end_time","locate", "vehicle_factory", "chargeStatus", "mileage", "voltage", "current", "soc", "dcStatus", "insulationResistance", "maxVoltageSystemNum", "maxVoltagebatteryNum", "batteryMaxVoltage", "minVoltageSystemNum", "minVoltagebatteryNum", "batteryMinVoltage", "maxTemperatureSystemNum", "maxTemperatureNum", "maxTemperature", "minTemperatureSystemNum", "minTemperatureNum", "minTemperature", "temperatureProbeCount", "cellCount", "longitude", "latitude", "speed","probetemperatures","cellvoltages")
+      //.select( "vin", "start_time", "alarm_type", "end_time","province","city","area","region","vehicle_factory", "chargeStatus", "mileage", "voltage", "current", "soc", "dcStatus", "insulationResistance", "maxVoltageSystemNum", "maxVoltagebatteryNum", "batteryMaxVoltage", "minVoltageSystemNum", "minVoltagebatteryNum", "batteryMinVoltage", "maxTemperatureSystemNum", "maxTemperatureNum", "maxTemperature", "minTemperatureSystemNum", "minTemperatureNum", "minTemperature", "temperatureProbeCount", "cellCount", "longitude", "latitude", "speed","probetemperatures","cellvoltages")
     value.printSchema()
 
     value.show(false)
 
-
-    var mysql_properties = new Properties()
-    mysql_properties.setProperty("user",properties.getProperty("mysql.user"))
-    mysql_properties.setProperty("password",properties.getProperty("mysql.passwd"))
-
-
     value
-      .write.mode("overwrite")
+      .write
+      .mode("append")
       .format("jdbc")
+      .option("driver","com.mysql.cj.jdbc.Driver")
       .option("url", properties.getProperty("mysql.conn"))
       .option("dbtable", properties.getProperty("mysql.offline.table")) //表名
       .option("user", properties.getProperty("mysql.user"))
@@ -139,6 +133,10 @@ object OfflineWarning {
 
   val udf_list_toString=udf( (list:Seq[Long])=>{
     list.mkString("[", ",", "]")
+  })
+
+  val udf_parse_locate=udf( (list:Seq[String])=>{
+    list(1)
   })
 
 

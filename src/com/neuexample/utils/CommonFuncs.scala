@@ -88,7 +88,7 @@ object CommonFuncs {
     *获取经纬度RDD
      */
   def locateCityRDD(lon :Double ,lat :Double,gps_rdd :Array[String]) :String={
-    val current_place = gps_rdd.map( rdd =>{
+    val current_place = gps_rdd.map(rdd =>{
       val splits = rdd.split(",")
       val llat = splits(3).toDouble
       val llon = splits(4).toDouble
