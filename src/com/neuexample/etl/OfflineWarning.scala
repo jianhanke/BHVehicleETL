@@ -72,14 +72,16 @@ object OfflineWarning {
     mysql_properties.setProperty("password",properties.getProperty("mysql.passwd"))
 
 
-
-//
     value
-      .write
+      .write.mode("overwrite")
       .format("jdbc")
-      .option("driver","com.mysql.cj.jdbc.Driver")
-      .mode(SaveMode.Append)
-      .jdbc( properties.getProperty("mysql.conn") ,"app_alarm_test",mysql_properties )
+      .option("url", properties.getProperty("mysql.conn"))
+      .option("dbtable", properties.getProperty("mysql.offline.table")) //表名
+      .option("user", properties.getProperty("mysql.user"))
+      .option("password", properties.getProperty("mysql.passwd"))
+      .option("batchsize", "50000")
+      .option("truncate", "true")
+      .save()
 
 
 

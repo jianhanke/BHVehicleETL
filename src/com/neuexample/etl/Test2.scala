@@ -28,9 +28,13 @@ object Test2 {
     properties.setProperty("user","battery")
     properties.setProperty("password","Abcd.123")
 
-    df.write.mode(SaveMode.Append).jdbc( properties.getProperty("mysql.conn"),"app_alarm_offline",properties )
+   // df.write.mode(SaveMode.Append).jdbc( properties.getProperty("mysql.conn"),"app_alarm_offline",properties )
 
-    df.show()
+    //df.show()
+
+    val i: Double = -1 / 37000
+    println( i )
+    println( -1 / -37000 )
 
 
   }
