@@ -281,7 +281,7 @@ object WarningSteaming  extends Serializable{
     }
 
     if(vehicleFactory == 2 && alarm_type.equals("socHigh") ){
-          json.put("alarm_type",false);
+          json.put(alarm_type,false);
     }
 
 

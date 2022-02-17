@@ -264,11 +264,11 @@ object Geely extends Serializable{
     val insulationResistance: Integer = json.getInteger("insulationResistance")
 
     json.put("insulation",0);    // 去掉车厂发过来的绝缘值
-    if(insulationResistance != null && totalVoltage != null && minCellVoltage != null  ){
+    if(insulationResistance != null && totalVoltage != null && minCellVoltage != null  && insulationResistance > 0  ){
 
-      if(insulationResistance / (totalVoltage / 1000.0) < 10000  ){
+      if(insulationResistance / (totalVoltage / 1000.0) < 100  ){
           json.put("insulation",3);
-      }else if(insulationResistance / (totalVoltage / 1000.0) < 50000) {
+      }else if(insulationResistance / (totalVoltage / 1000.0) < 500 ) {
           json.put("insulation",2);
       }
 
