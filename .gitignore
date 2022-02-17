@@ -1,0 +1,7 @@
+*.idea
+*.iml
+*.mdb  
+*.ldb
+*.sln
+.idea
+/target/
