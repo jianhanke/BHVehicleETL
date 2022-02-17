@@ -55,8 +55,6 @@ object WarningSteaming  extends Serializable{
       "auto.offset.reset" -> properties.getProperty("kafka.auto.offset.reset")
     )
 
-
-
     // 用Kafka Direct API直接读数据
     val initStream = KafkaUtils.createDirectStream[String, String](
       ssc,
@@ -280,6 +278,10 @@ object WarningSteaming  extends Serializable{
 
     }else{
       level = 1
+    }
+
+    if(vehicleFactory == 2 && alarm_type.equals("socHigh") ){
+          json.put("alarm_type",false);
     }
 
 

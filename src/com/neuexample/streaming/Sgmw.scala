@@ -4,16 +4,16 @@ package com.neuexample.streaming
 import com.alibaba.fastjson.{JSON, JSONObject}
 import org.apache.spark.streaming.dstream.DStream
 
-object Sgmw {
+object Sgmw extends Serializable{
 
 
-  def addSgmwApi(persistsParts: DStream[String]): DStream[String]={
+  def addSgmwApi(persistsParts: DStream[String]): DStream[String]= {
       println("Sgmw is comeing")
       addSgmwAlarm(persistsParts);
   }
 
 
-  def addSgmwAlarm(persistsParts: DStream[String]): DStream[String]={
+  def addSgmwAlarm(persistsParts: DStream[String]): DStream[String]= {
     val value: DStream[String] = persistsParts.map {
 
       line => {
@@ -40,10 +40,10 @@ object Sgmw {
   }
 
 
-  def isInsulationAlarm( json:JSONObject){
+  def isInsulationAlarm( json: JSONObject){
     val insulationResistance: Integer = json.getInteger("insulationResistance")
 
-    if(insulationResistance!=null  && insulationResistance > 0 ) {
+    if(insulationResistance != null  && insulationResistance > 0 ) {
       if (insulationResistance <= 40000) {
         json.put("insulation", 2);
       } else if (insulationResistance <= 100000) {
@@ -53,10 +53,10 @@ object Sgmw {
 
   }
 
-  def isMonomerBatteryUnderVoltage(json:JSONObject): Unit ={
+  def isMonomerBatteryUnderVoltage(json: JSONObject){
 
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
-    if(minCellVoltage!=null) {
+    if(minCellVoltage != null) {
       if (minCellVoltage <= 2200) {
         json.put("monomerBatteryUnderVoltage", 3);
       } else if (minCellVoltage <= 2400) {
@@ -68,10 +68,10 @@ object Sgmw {
   }
 
   //判断单体电池过压
-  def isMonomerBatteryOverVoltage(json:JSONObject): Unit ={
+  def isMonomerBatteryOverVoltage(json: JSONObject){
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
-    if(maxCellVoltage!=null) {
+    if(maxCellVoltage != null) {
       if (maxCellVoltage >= 3750) {
         json.put("monomerBatteryOverVoltage",3);
       } else if (maxCellVoltage >= 3700) {
@@ -83,13 +83,13 @@ object Sgmw {
   }
 
   //判断总电池欠压
-  def isDeviceTypeUnderVoltage(json:JSONObject): Unit ={
+  def isDeviceTypeUnderVoltage(json: JSONObject){
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     val cellCount: Integer = json.getInteger("cellCount")
 
-    if(totalVoltage!=null  && cellCount!=null && minCellVoltage!=null ) {
+    if(totalVoltage != null  && cellCount != null && minCellVoltage != null ) {
       if (totalVoltage >= minCellVoltage * cellCount && totalVoltage <= 2000 * cellCount) {
         json.put("deviceTypeUnderVoltage",3);
       } else if (totalVoltage >= minCellVoltage * cellCount && totalVoltage <= 2300 * cellCount) {
@@ -101,12 +101,12 @@ object Sgmw {
   }
 
   //判断总电池过压
-  def isDeviceTypeOverVoltage(json:JSONObject): Unit ={
+  def isDeviceTypeOverVoltage(json: JSONObject){
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val cellCount: Integer = json.getInteger("cellCount")
 
-    if(totalVoltage!=null  && cellCount!=null ) {
+    if(totalVoltage != null  && cellCount != null ) {
       if (totalVoltage >= 3750 * cellCount) {
         json.put("deviceTypeOverVoltage",3);
       } else if (totalVoltage >= 3700 * cellCount) {
@@ -119,12 +119,12 @@ object Sgmw {
   }
 
 
-  def isBatteryConsistencyPoor(json:JSONObject){
+  def isBatteryConsistencyPoor(json: JSONObject){
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
-    if(maxCellVoltage!=null && minCellVoltage!=null){
-      var diff=maxCellVoltage - minCellVoltage
+    if(maxCellVoltage != null && minCellVoltage != null){
+      var diff = maxCellVoltage - minCellVoltage
       if( diff >= 1000 ){
         json.put("batteryConsistencyPoor", 3)
       }else if(diff >= 800){
@@ -136,7 +136,7 @@ object Sgmw {
 
   }
 
-  def isBatteryHighTemperature(json:JSONObject){
+  def isBatteryHighTemperature(json: JSONObject){
 
 
     val maxTemperature: Integer = json.getInteger("maxTemperature")
@@ -153,10 +153,10 @@ object Sgmw {
 
   }
 
-  def isSocLow(json:JSONObject){
+  def isSocLow(json: JSONObject){
 
     val soc: Integer = json.getInteger("soc")
-    if(soc!=null && soc>0 &&  soc < 2){
+    if(soc != null && soc > 0 &&  soc < 2){
       json.put("socLow",1);
     }
 

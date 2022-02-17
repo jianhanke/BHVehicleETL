@@ -1,7 +1,6 @@
 package com.neuexample.streaming
 
 
-import java.lang
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.neuexample.utils.MathFuncs._
 
@@ -9,10 +8,10 @@ import com.neuexample.utils.CommonFuncs.{mkctime, _}
 import org.apache.spark.streaming.{State, StateSpec}
 import org.apache.spark.streaming.dstream.{DStream, MapWithStateDStream}
 
-object Geely {
+object Geely extends Serializable{
 
 
-  val func_state_geely=( key:String,values:Option[JSONObject],state:State[JSONObject] )=>{
+  val func_state_geely = ( key:String,values:Option[JSONObject],state:State[JSONObject] ) => {
 
 
     val old_obj: JSONObject = state.getOption().getOrElse(null)
@@ -26,7 +25,7 @@ object Geely {
 //        ))
 //    }
 
-    if(old_obj!=null){
+    if(old_obj != null){
       isSocHigh(old_obj,obj);
       isSocNotBalance(old_obj,obj);
       isElectricBoxWithWater(old_obj,obj);
@@ -37,7 +36,7 @@ object Geely {
     obj.toString;
   }
 
-  def addGeelyApi(persistsParts: DStream[String]): DStream[String]={
+  def addGeelyApi(persistsParts: DStream[String]): DStream[String] = {
 
     println("geely come")
     val geelyVin2Json: DStream[(String, JSONObject)] = addGeelyAlarm(persistsParts)
@@ -45,7 +44,7 @@ object Geely {
 
   }
 
-  def addGeelyAlarm(persistsParts: DStream[String]): DStream[(String, JSONObject)]={
+  def addGeelyAlarm(persistsParts: DStream[String]): DStream[(String, JSONObject)] = {
 
     val vin2Json: DStream[(String, JSONObject)] = persistsParts.map {
 
@@ -90,17 +89,16 @@ object Geely {
     val cellVoltageArray: Array[Int] = stringToIntArray(json.getString("cellVoltages"))
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
-    if(cellVoltageArray!=null && batteryMaxVoltage!=null && batteryMinVoltage!=null && cellVoltageArray.length>1 ){
+    if(cellVoltageArray != null && batteryMaxVoltage != null && batteryMinVoltage != null && cellVoltageArray.length > 1 ){
 
       val quartile: (Double, Double) = calculateQuartile(cellVoltageArray)
-      val  IQR: Double = quartile._2-quartile._1
+      val  IQR: Double = quartile._2 - quartile._1
       var upperBoundary = quartile._2 + 1.5 * IQR;
       val downBoundary: Double = quartile._1 - 1.5 * IQR
 
       if( batteryMaxVoltage > upperBoundary || batteryMaxVoltage < downBoundary ||  batteryMinVoltage > upperBoundary || batteryMinVoltage < downBoundary   ){
 
-          println("Q3,Q1:"+quartile+",up:"+upperBoundary+",down:"+downBoundary+",maxV:"+batteryMaxVoltage+",minV:"+batteryMinVoltage);
-
+          // println("Q3,Q1:"+quartile+",up:"+upperBoundary+",down:"+downBoundary+",maxV:"+batteryMaxVoltage+",minV:"+batteryMinVoltage);
           json.put("abnormalVoltage",1);
           json.put("voltage_uppder_boundary",upperBoundary)
           json.put("voltage_down_boundary",downBoundary)
@@ -114,16 +112,16 @@ object Geely {
     val probeTeptureArray: Array[Int] = stringToIntArray(json.getString("probeTemperatures"))
     val maxTemperature: Integer = json.getInteger("maxTemperature")
     val minTemperature: Integer = json.getInteger("minTemperature")
-    if(probeTeptureArray!=null && maxTemperature!=null && minTemperature!=null && probeTeptureArray.length>1 ){
+    if(probeTeptureArray != null && maxTemperature != null && minTemperature != null && probeTeptureArray.length > 1 ){
       for( i <-  0 until probeTeptureArray.length){
-          probeTeptureArray(i)=probeTeptureArray(i) - 40;
+          probeTeptureArray(i) = probeTeptureArray(i) - 40;
       }
       val quartile: (Double, Double) = calculateQuartile(probeTeptureArray)
-      val  IQR: Double = quartile._2-quartile._1
+      val  IQR: Double = quartile._2 - quartile._1
       var upperBoundary = quartile._2 + 1.5 * IQR;
       val downBoundary: Double = quartile._1 - 1.5 * IQR
       if( maxTemperature > upperBoundary || maxTemperature < downBoundary ||  minTemperature > upperBoundary || minTemperature < downBoundary   ){
-        println("Q3,Q1:"+quartile+",up:"+upperBoundary+",down:"+downBoundary+",maxT:"+maxTemperature+",minT:"+minTemperature);
+        //println("Q3,Q1:" +quartile+ ",up:"+upperBoundary+",down:"+downBoundary+",maxT:"+maxTemperature+",minT:"+minTemperature);
         json.put("abnormalTemperature",1);
         json.put("temperature_uppder_boundary",upperBoundary);
         json.put("temperature_down_boundary",downBoundary);
@@ -138,17 +136,17 @@ object Geely {
     val old_soc: Integer = old_json.getInteger("soc")
     val current: Integer = json.getInteger("current")
 
-    if(soc!=null && old_soc!=null  && current!=null  && math.abs(soc-old_soc) >= 8 && math.abs(current) > 30000 && timeStamp > old_timeStamp && timeStamp-old_timeStamp < 30     ){
+    if(soc != null && old_soc != null  && current != null  && math.abs(soc-old_soc) >= 8 && math.abs(current) > 30000 && timeStamp > old_timeStamp && timeStamp-old_timeStamp < 30     ){
       json.put("socJump",2);
-      json.put("soc_jump_value",math.abs(soc-old_soc))
+      json.put("soc_jump_value",math.abs(soc - old_soc))
       json.put("current",math.abs(current));
-      json.put("soc_jump_time",timeStamp-old_timeStamp)
+      json.put("soc_jump_time",timeStamp - old_timeStamp)
       json.put("current",current);
       json.put("last_start_time",old_timeStamp)
     }
   }
 
-  def isBatteryHighTemperature(old_json:JSONObject,json:JSONObject): Unit = {
+  def isBatteryHighTemperature(old_json: JSONObject,json: JSONObject): Unit = {
 
     val insulationResistance: Integer = json.getInteger("insulationResistance")
     val maxTemperature: Integer = json.getInteger("maxTemperature")
@@ -158,19 +156,19 @@ object Geely {
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val old_timeStamp: Integer = old_json.getInteger("timeStamp")
 
-    if(batteryMaxVoltage!=null && batteryMinVoltage!=null && totalVoltage!=null  && batteryMaxVoltage-batteryMinVoltage >= 400
-      && insulationResistance!=null && insulationResistance/(totalVoltage/1000.0) <= 500 && maxTemperature!=null && old_maxTemperature!=null )
+    if(batteryMaxVoltage != null && batteryMinVoltage != null && totalVoltage != null  && batteryMaxVoltage - batteryMinVoltage >= 400
+      && insulationResistance != null && insulationResistance / (totalVoltage / 1000.0) <= 500 && maxTemperature != null && old_maxTemperature != null )
       {
         val temperatureDiff: Integer = math.abs(maxTemperature-old_maxTemperature)
-        if(  temperatureDiff>30 || maxTemperature==87   ){     //删除87度
+        if(  temperatureDiff > 30 || maxTemperature == 87   ){     //删除87度
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",3);
           json.put("last_start_time",old_timeStamp)
-        }else if(  temperatureDiff>20 && temperatureDiff<=30   ){
+        }else if(  temperatureDiff > 20 && temperatureDiff <= 30   ){
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",2);
           json.put("last_start_time",old_timeStamp)
-        }else if(  temperatureDiff>=15 && temperatureDiff<=20     ){
+        }else if(  temperatureDiff >= 15 && temperatureDiff <= 20     ){
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",1);
           json.put("last_start_time",old_timeStamp)
@@ -179,31 +177,31 @@ object Geely {
 
   }
 
-  def isElectricBoxWithWater(old_json:JSONObject,json:JSONObject): Unit = {
+  def isElectricBoxWithWater(old_json: JSONObject,json: JSONObject): Unit = {
     val timeStamp: Integer = json.getInteger("timeStamp")
     val old_timeStamp: Integer = old_json.getInteger("timeStamp")
-    val secondsDiff: Integer = timeStamp-old_timeStamp
+    val secondsDiff: Integer = timeStamp - old_timeStamp
 
     val insulationResistance: Integer = json.getInteger("insulationResistance")
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val old_totalVoltage: Integer = old_json.getInteger("totalVoltage")
 
 
-    if(totalVoltage!=null && totalVoltage >= 100000 && totalVoltage <= 500000
-      && old_totalVoltage!=null && old_totalVoltage >= 100000 && old_totalVoltage <= 500000
-      && insulationResistance!=null && insulationResistance/(totalVoltage/1000.0) < 500
-      && secondsDiff> 0 &&  secondsDiff <= 15
-      &&  (totalVoltage-old_totalVoltage)/1000.0 /secondsDiff > 0.05 )
+    if(totalVoltage != null && totalVoltage >= 100000 && totalVoltage <= 500000
+      && old_totalVoltage != null && old_totalVoltage >= 100000 && old_totalVoltage <= 500000
+      && insulationResistance != null && insulationResistance / ( totalVoltage / 1000.0) < 500
+      && secondsDiff > 0 &&  secondsDiff <= 15
+      &&  (totalVoltage - old_totalVoltage) / 1000.0 / secondsDiff > 0.05 )
     {
       json.put("electricBoxWithWater",1);
-      json.put("total_voltage_drop_rate",(totalVoltage-old_totalVoltage)/1000.0 /secondsDiff);
+      json.put("total_voltage_drop_rate",(totalVoltage - old_totalVoltage) / 1000.0 /secondsDiff);
       json.put("last_start_time",old_timeStamp)
     }
 
 
   }
 
-  def isSocHigh(old_json:JSONObject,json:JSONObject) {
+  def isSocHigh(old_json: JSONObject,json: JSONObject) {
 
     val timeStamp: Integer = json.getInteger("timeStamp")
     val old_timeStamp: Integer = old_json.getInteger("timeStamp")
@@ -213,7 +211,7 @@ object Geely {
 
     val current: Integer = json.getInteger("current")
 
-    if(timeStamp!=null && old_timeStamp!=null && soc!=null && maxTemperature!=null && maxCellVoltage!=null && current!=null && current==0  && timeStamp-old_timeStamp >= 3600 && timeStamp-old_timeStamp <= 86400    ) {
+    if(timeStamp != null && old_timeStamp != null && soc != null && maxTemperature != null && maxCellVoltage != null && current != null && current == 0  && timeStamp - old_timeStamp >= 3600 && timeStamp - old_timeStamp <= 86400    ) {
 
       val socMax: Double = calculateSoc(maxTemperature,maxCellVoltage )
       if ( soc - socMax >= 10) {
@@ -225,7 +223,7 @@ object Geely {
     }
   }
 
-  def isSocNotBalance(old_json:JSONObject,json:JSONObject) {
+  def isSocNotBalance(old_json: JSONObject,json: JSONObject) {
 
     val timeStamp: Integer = json.getInteger("timeStamp")
     val old_timeStamp: Integer = old_json.getInteger("timeStamp")
@@ -235,21 +233,21 @@ object Geely {
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
 
-    if(timeStamp!=null && old_timeStamp!=null  && current!=null && current==0 && batteryMaxVoltage!=null && batteryMinVoltage!=null && timeStamp-old_timeStamp >= 3600 && timeStamp-old_timeStamp <= 86400) {
+    if(timeStamp != null && old_timeStamp != null  && current != null && current == 0 && batteryMaxVoltage != null && batteryMinVoltage != null && timeStamp - old_timeStamp >= 3600 && timeStamp - old_timeStamp <= 86400) {
       val socMax: Double = calculateSoc(avgTemperature,batteryMaxVoltage)
       val socMin: Double = calculateSoc(avgTemperature,batteryMinVoltage)
 
-      if(socMax-socMin >= 10){
+      if(socMax - socMin >= 10){
         json.put("socNotBalance",1);
-        json.put("soc_diff_value",socMax-socMin);
-        json.put("soc_notbalance_time",timeStamp-old_timeStamp)
-        json.put("last_start_time",old_timeStamp)
+        json.put("soc_diff_value",socMax - socMin);
+        json.put("soc_notbalance_time",timeStamp - old_timeStamp);
+        json.put("last_start_time",old_timeStamp);
       }
     }
   }
 
 
-  def isVoltageJump(json:JSONObject){
+  def isVoltageJump(json: JSONObject){
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
@@ -260,30 +258,31 @@ object Geely {
   }
 
 
-  def isInsulation(json:JSONObject): Unit ={
+  def isInsulation(json: JSONObject){
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val insulationResistance: Integer = json.getInteger("insulationResistance")
 
     json.put("insulation",0);    // 去掉车厂发过来的绝缘值
-    if(insulationResistance!=null && totalVoltage!=null && minCellVoltage!=null && minCellVoltage <= 1800 ){
+    if(insulationResistance != null && totalVoltage != null && minCellVoltage != null  ){
 
-      if(insulationResistance/(totalVoltage/1000.0) < 100  ){
+      if(insulationResistance / (totalVoltage / 1000.0) < 10000  ){
           json.put("insulation",3);
-      }else if(insulationResistance/(totalVoltage/1000.0) < 500) {
+      }else if(insulationResistance / (totalVoltage / 1000.0) < 50000) {
           json.put("insulation",2);
       }
+
     }
 
   }
 
   // 判断单体电压欠压
-  def isMonomerBatteryUnderVoltage(json:JSONObject){
+  def isMonomerBatteryUnderVoltage(json: JSONObject){
 
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
-     val avgTemperature: lang.Double = json.getDouble("temperature")
+     val avgTemperature: Double = json.getDouble("temperature")
 
-    if(minCellVoltage!=null && avgTemperature!=null  && minCellVoltage <= 4700 ) {
+    if(minCellVoltage != null && avgTemperature != null  && minCellVoltage <= 4700 ) {
       if (avgTemperature > 0) {               //判断单题电池欠压
         if (minCellVoltage < 2000) {
           json.put("monomerBatteryUnderVoltage",3);
@@ -311,7 +310,7 @@ object Geely {
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
 
-    if (maxCellVoltage!=null  &&   maxCellVoltage<=4700) {
+    if (maxCellVoltage != null  &&   maxCellVoltage <= 4700) {
         if (maxCellVoltage > 4240) { //判断单体电池过压
           json.put("monomerBatteryOverVoltage",3);
         } else if (maxCellVoltage > 4230) {
@@ -323,14 +322,14 @@ object Geely {
 
   }
 
-  def isDeviceTypeUnderVoltage(json:JSONObject){
+  def isDeviceTypeUnderVoltage(json: JSONObject){
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
-    val avgTemperature: lang.Double = json.getDouble("temperature")
+    val avgTemperature: Double = json.getDouble("temperature")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     val cellCount: Integer = json.getInteger("cellCount")
 
-    if(totalVoltage!=null && avgTemperature!=null && cellCount!=null && minCellVoltage!=null ){ //筛选总体电压，
+    if(totalVoltage != null && avgTemperature != null && cellCount != null && minCellVoltage != null ){ //筛选总体电压，
       val minVoltage_cellCount: Int = minCellVoltage * cellCount
 
       if (avgTemperature > 0) {            //判断总电池欠压
@@ -355,10 +354,10 @@ object Geely {
 
   }
 
-  def isDeviceTypeOverVoltage(json:JSONObject){
+  def isDeviceTypeOverVoltage(json: JSONObject){
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
-    if(totalVoltage!=null && totalVoltage<=500000){ //筛选总体电压，
+    if(totalVoltage != null && totalVoltage <= 500000){ //筛选总体电压，
       if(totalVoltage >  432500 ){      //判断总电池过压
         json.put("deviceTypeOverVoltage",3);
       }else if( totalVoltage > 431500 ){
@@ -373,10 +372,10 @@ object Geely {
 
 
 
-  def isVoltageJump(cellVoltageArray: Array[Int]):Boolean={
+  def isVoltageJump(cellVoltageArray: Array[Int]): Boolean = {
 
-    if(cellVoltageArray.max!=0 && cellVoltageArray.min!=0){
-      if( cellVoltageArray.min<  2000 ){
+    if(cellVoltageArray.max != 0 && cellVoltageArray.min != 0){
+      if( cellVoltageArray.min < 2000 ){
         return true
       }
     }
@@ -384,13 +383,13 @@ object Geely {
   }
 
 
-  def isBatteryConsistencyPoor(json:JSONObject){
+  def isBatteryConsistencyPoor(json: JSONObject){
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     val current: Integer = json.getInteger("current")
 
-    if(maxCellVoltage!=null && minCellVoltage!=null && current!=null) {
+    if(maxCellVoltage != null && minCellVoltage != null && current != null) {
       var diff = maxCellVoltage - minCellVoltage;
       if(diff > 600){
         json.put("batteryConsistencyPoor",3);
@@ -403,13 +402,13 @@ object Geely {
 
   }
 
-  def isOutFactorySafetyInspection(json:JSONObject){
+  def isOutFactorySafetyInspection(json: JSONObject){
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     val current: Integer = json.getInteger("current")
 
-    if(maxCellVoltage!=null && minCellVoltage!=null && current!=null) {
+    if(maxCellVoltage != null && minCellVoltage != null && current != null) {
 
       var diff = maxCellVoltage - minCellVoltage;
       if (current >= -2000 && current <= 2000) {
@@ -419,7 +418,7 @@ object Geely {
           json.put("outFactorySafetyInspection", 1);
         }
       } else {
-        if(diff > 90  ){
+        if(diff > 90 ){
           json.put("outFactorySafetyInspection", 2);
         }else if( diff >60  ){
           json.put("outFactorySafetyInspection", 1);

@@ -37,7 +37,7 @@ object CommonFuncs {
     *func:组合被拆解的ctime
      */
   val udf_mkctime = udf((year:Int,month:Int,day:Int,hours:Int,minutes:Int,seconds:Int)=>{
-    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%s-%02d-%02d %02d:%02d:%02d".format(year,month,day,hours,minutes,seconds)).getTime/1000
+    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%02d-%02d-%02d %02d:%02d:%02d".format(year,month,day,hours,minutes,seconds)).getTime/1000
   })
   /*
       *func:组合被拆解的ctime,function版
@@ -45,7 +45,7 @@ object CommonFuncs {
   def mkctime (year:Int,month:Int,day:Int,hours:Int,minutes:Int,seconds:Int) :Long ={
     //println("year:"+year+",month:"+month+",day:"+day+",hours:"+hours+",minutes:"+minutes+",seconds"+seconds);
     try {
-      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%s-%02d-%02d %02d:%02d:%02d".format(year, month, day, hours, minutes, seconds)).getTime / 1000
+      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%02d-%02d-%02d %02d:%02d:%02d".format(year, month, day, hours, minutes, seconds)).getTime / 1000
     }catch {
       case e=> return 0;
     }
