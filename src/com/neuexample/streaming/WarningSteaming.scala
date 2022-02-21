@@ -280,7 +280,7 @@ object WarningSteaming  extends Serializable{
       level = 1
     }
 
-    if(vehicleFactory == 2 && alarm_type.equals("socHigh") ){
+    if(vehicleFactory == 2  ){  // 暂时将 江淮发的警报置为空，后续如果单独添设计江淮警报，删除此行。
           json.put(alarm_type,false);
     }
 
