@@ -1,9 +1,10 @@
 package com.neuexample.streaming
 
 
+import java.lang
+
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.neuexample.utils.MathFuncs._
-
 import com.neuexample.utils.CommonFuncs.{mkctime, _}
 import org.apache.spark.streaming.{State, StateSpec}
 import org.apache.spark.streaming.dstream.{DStream, MapWithStateDStream}
@@ -228,7 +229,7 @@ object Geely extends Serializable{
     val timeStamp: Integer = json.getInteger("timeStamp")
     val old_timeStamp: Integer = old_json.getInteger("timeStamp")
 
-    val avgTemperature: Double = json.getDouble("temperature")
+    val avgTemperature: lang.Double = json.getDouble("temperature")
     val current: Integer = json.getInteger("current")
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
@@ -280,7 +281,7 @@ object Geely extends Serializable{
   def isMonomerBatteryUnderVoltage(json: JSONObject){
 
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
-     val avgTemperature: Double = json.getDouble("temperature")
+     val avgTemperature: lang.Double = json.getDouble("temperature")
 
     if(minCellVoltage != null && avgTemperature != null  && minCellVoltage <= 4700 ) {
       if (avgTemperature > 0) {               //判断单题电池欠压
@@ -325,7 +326,7 @@ object Geely extends Serializable{
   def isDeviceTypeUnderVoltage(json: JSONObject){
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
-    val avgTemperature: Double = json.getDouble("temperature")
+    val avgTemperature: lang.Double = json.getDouble("temperature")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     val cellCount: Integer = json.getInteger("cellCount")
 
