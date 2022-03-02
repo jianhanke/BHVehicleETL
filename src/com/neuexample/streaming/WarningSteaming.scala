@@ -67,9 +67,9 @@ object WarningSteaming  extends Serializable{
     val df_gps_bc = ssc.sparkContext.broadcast(df_gps.collect())
 
     //alarm监控列表
-    val alarms = "batteryHighTemperature,socJump,socNotBalance,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage"
-    val alarmSet:Set[String] = alarms.split(",").toSet
-    val bc_alarmSet: Broadcast[Set[String]] = ssc.sparkContext.broadcast(alarmSet)
+    val alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage"
+
+    val bc_alarmSet: Broadcast[Set[String]] = ssc.sparkContext.broadcast(alarms.split(",").toSet)
 
     def parseCity(jsonstr:String) :String ={
       val jsonobject :JSONObject = JSON.parseObject(jsonstr)
@@ -85,10 +85,9 @@ object WarningSteaming  extends Serializable{
     val persistsParts: DStream[String] = initStream.map(_.value()).persist(StorageLevel.MEMORY_ONLY)
 
 
-    val geelyVehicldes: DStream[String] = persistsParts.filter(line => {
+    val geelyVehicldes: DStream[String] = persistsParts.filter( line => {
       val json: JSONObject = JSON.parseObject(line)
-      val factory: String = json.getString("vehicleFactory")
-      factory.equals("5")
+        json.getString("vehicleFactory").equals("5")
     })
 
 
@@ -96,21 +95,13 @@ object WarningSteaming  extends Serializable{
       val json: JSONObject = JSON.parseObject(line)
        json.getString("vehicleFactory").equals("1")
     })
-      .map{
-        line=>{
-          val json: JSONObject = JSON.parseObject(line)
-          for(alarm_column <- bc_alarmSet.value) {
-              json.put(alarm_column,0);
-          }
-          json.toString
-        }
-      }
+
 
 
     val otherVehicldes: DStream[String] = persistsParts.filter(line => {
       val json: JSONObject = JSON.parseObject(line)
       val factory: String = json.getString("vehicleFactory")
-      !(factory.equals("5") || factory.equals("1"));
+      !(factory.equals("5") || factory.equals("1") || factory.equals("2") );
     })
 
 
@@ -202,7 +193,7 @@ object WarningSteaming  extends Serializable{
               partitions.foreach(record => {
                 //插入
                 if(record._2 == true) {
-                  val insert_sql = "insert into app_alarm_divide_dwd(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                  val insert_sql = "insert into app_alarm_divide_ps(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                     .format(record._1.vin
                       , record._1.start_time
                       , record._1.alarm_type
@@ -280,9 +271,9 @@ object WarningSteaming  extends Serializable{
       level = 1
     }
 
-    if(vehicleFactory == 2  ){  // 暂时将 江淮发的警报置为空，后续如果单独添设计江淮警报，删除此行。
-          json.put(alarm_type,false);
-    }
+//    if(vehicleFactory == 2  ){  // 暂时将 江淮发的警报置为空，后续如果单独添设计江淮警报，删除此行。
+//          json.put(alarm_type,false);
+//    }
 
 
     val ctime = mkctime(json.getInteger("year")

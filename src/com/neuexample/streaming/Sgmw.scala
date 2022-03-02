@@ -18,7 +18,6 @@ object Sgmw extends Serializable{
 
       line => {
         val json: JSONObject = JSON.parseObject(line)
-         // println("comeing sgmw");
 
         isMonomerBatteryUnderVoltage(json);
         isMonomerBatteryOverVoltage(json);
@@ -27,11 +26,17 @@ object Sgmw extends Serializable{
 
         isInsulationAlarm(json);
 
-        isBatteryConsistencyPoor(json);
-
         isBatteryHighTemperature(json);
 
+        isBatteryConsistencyPoor(json);
+
         isSocLow(json);
+
+        isSocHigh(json);  // 置为空
+        isSocJump(json);  //  置为空
+        isTemperatureDifferential(json)  //  置为空
+
+
 
         json.toString
       }
@@ -41,6 +46,9 @@ object Sgmw extends Serializable{
 
 
   def isInsulationAlarm( json: JSONObject){
+
+    json.put("insulation", false);
+
     val insulationResistance: Integer = json.getInteger("insulationResistance")
 
     if(insulationResistance != null  && insulationResistance > 0 ) {
@@ -54,6 +62,8 @@ object Sgmw extends Serializable{
   }
 
   def isMonomerBatteryUnderVoltage(json: JSONObject){
+
+    json.put("monomerBatteryUnderVoltage", false);
 
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     if(minCellVoltage != null) {
@@ -70,6 +80,8 @@ object Sgmw extends Serializable{
   //判断单体电池过压
   def isMonomerBatteryOverVoltage(json: JSONObject){
 
+    json.put("monomerBatteryOverVoltage",false);
+
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     if(maxCellVoltage != null) {
       if (maxCellVoltage >= 3750) {
@@ -84,6 +96,8 @@ object Sgmw extends Serializable{
 
   //判断总电池欠压
   def isDeviceTypeUnderVoltage(json: JSONObject){
+
+    json.put("deviceTypeUnderVoltage",false);
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
@@ -103,6 +117,8 @@ object Sgmw extends Serializable{
   //判断总电池过压
   def isDeviceTypeOverVoltage(json: JSONObject){
 
+    json.put("deviceTypeOverVoltage",false);
+
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val cellCount: Integer = json.getInteger("cellCount")
 
@@ -121,6 +137,8 @@ object Sgmw extends Serializable{
 
   def isBatteryConsistencyPoor(json: JSONObject){
 
+    json.put("batteryConsistencyPoor", false);
+
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     if(maxCellVoltage != null && minCellVoltage != null){
@@ -138,6 +156,7 @@ object Sgmw extends Serializable{
 
   def isBatteryHighTemperature(json: JSONObject){
 
+    json.put("batteryHighTemperature",false);
 
     val maxTemperature: Integer = json.getInteger("maxTemperature")
 
@@ -155,6 +174,8 @@ object Sgmw extends Serializable{
 
   def isSocLow(json: JSONObject){
 
+    json.put("socLow",false);
+
     val soc: Integer = json.getInteger("soc")
     if(soc != null && soc > 0 &&  soc < 2){
       json.put("socLow",1);
@@ -162,8 +183,22 @@ object Sgmw extends Serializable{
 
   }
 
+  def isSocHigh(json: JSONObject){
 
+    json.put("socHigh",false);
 
+  }
 
+  def isTemperatureDifferential(json: JSONObject): Unit ={
+
+    json.put("temperatureDifferential",false);
+
+  }
+
+  def isSocJump(json: JSONObject): Unit ={
+
+    json.put("socJump",false);
+
+  }
 
 }
