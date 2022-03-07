@@ -212,13 +212,22 @@ object Geely extends Serializable{
 
     val current: Integer = json.getInteger("current")
 
-    if(timeStamp != null && old_timeStamp != null && soc != null && maxTemperature != null && maxCellVoltage != null && current != null && current == 0  && timeStamp - old_timeStamp >= 3600 && timeStamp - old_timeStamp <= 86400    ) {
+    if(timeStamp != null && old_timeStamp != null && soc != null && maxTemperature != null && maxCellVoltage != null && current != null && current == 0  && soc <= 40 && timeStamp - old_timeStamp >= 3600 && timeStamp - old_timeStamp <= 86400    ) {
 
       val socMax: Double = calculateSoc(maxTemperature,maxCellVoltage )
-      if ( soc - socMax >= 10) {
+      val timeDiff: Int = timeStamp - old_timeStamp
+      
+      val socSelfDis: Double = timeDiff / 1800 * 0.25
+
+      if(soc - socMax - socSelfDis >= 10){
+        json.put("socHigh", 2);
+        json.put("soc_high_value",soc - socMax - socSelfDis);
+        json.put("soc_high_time", timeDiff)
+        json.put("last_start_time",old_timeStamp)
+      }else if ( soc - socMax >= 10) {
         json.put("socHigh", 1);
         json.put("soc_high_value", soc - socMax);
-        json.put("soc_high_time", timeStamp - old_timeStamp)
+        json.put("soc_high_time", timeDiff)
         json.put("last_start_time",old_timeStamp)
       }
     }
@@ -433,25 +442,25 @@ object Geely extends Serializable{
   }
 
 
+  /*
+  def insertSqlError(str:String,vin:String): Unit ={
 
-//  def insertSqlError(str:String,vin:String): Unit ={
-//
-//
-//        val conn = getMysqlConn(properties)
-//       try{
-//
-//         var sql=" insert into test_error (vin,error_text) values('%s','%s')".format(vin,str);
-//         conn.prepareStatement(sql).executeUpdate()
-//       }catch {
-//         case ex: Exception => {
-//           System.err.println("Process one data error, but program will continue! ", ex)
-//         }
-//       }
-//       finally{
-//         conn.close()
-//       }
-//
-//  }
 
+        val conn = getMysqlConn(properties)
+       try{
+
+         var sql=" insert into test_error (vin,error_text) values('%s','%s')".format(vin,str);
+         conn.prepareStatement(sql).executeUpdate()
+       }catch {
+         case ex: Exception => {
+           System.err.println("Process one data error, but program will continue! ", ex)
+         }
+       }
+       finally{
+         conn.close()
+       }
+
+  }
+  */
 
 }
