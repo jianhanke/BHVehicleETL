@@ -35,16 +35,17 @@ object WarningSteaming  extends Serializable{
       .master(properties.getProperty("spark.master"))
       .appName("SparkStreamingKafkaDirexct")
       .getOrCreate()
+
     val sc = spark.sparkContext
     sc.setLogLevel("ERROR");
+
+
     val ssc =  new StreamingContext(sc, batchDuration = Seconds(2))
     ssc.checkpoint(properties.getProperty("checkpoint.dir"));
-    //gps Dataframe
-    val df_gps = spark.sparkContext.textFile("gps.csv")
-    df_gps.cache()
-    // Kafka的topic
-    val topics = properties.getProperty("kafka.topic")
-    val topicsSet: Set[String] = topics.split(",").toSet
+
+    val df_gps = spark.sparkContext.textFile("gps.csv").cache()
+
+
     // Kafka配置参数
     val kafkaParams: Map[String, Object] = Map[String, Object](
       "bootstrap.servers" -> properties.getProperty("kafka.bootstrap.servers"),
@@ -52,14 +53,15 @@ object WarningSteaming  extends Serializable{
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
       // 自动将偏移重置为最新的偏移，如果是第一次启动程序，应该为smallest，从头开始读
-      "auto.offset.reset" -> properties.getProperty("kafka.auto.offset.reset")
+      "auto.offset.reset" -> properties.getProperty("kafka.auto.offset.reset"),
+      "enable.auto.commit" -> "true"
     )
 
     // 用Kafka Direct API直接读数据
     val initStream = KafkaUtils.createDirectStream[String, String](
       ssc,
       LocationStrategies.PreferConsistent,
-      ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams)
+      ConsumerStrategies.Subscribe[String, String](properties.getProperty("kafka.topic").split(",").toSet, kafkaParams)
     )
 
 
@@ -98,19 +100,12 @@ object WarningSteaming  extends Serializable{
 
 
 
-    val otherVehicldes: DStream[String] = persistsParts.filter(line => {
-      val json: JSONObject = JSON.parseObject(line)
-      val factory: String = json.getString("vehicleFactory")
-      !(factory.equals("5") || factory.equals("1") || factory.equals("2") );
-    })
-
-
-
      val geelyData: DStream[String] = addGeelyApi(geelyVehicldes)
      val sgmwData: DStream[String] =  addSgmwApi(sgmwVehicldes)
 
 
-     val vehicleData: DStream[String] = otherVehicldes.union(sgmwData).union(geelyData)
+     // val vehicleData: DStream[String] = otherVehicldes.union(sgmwData).union(geelyData)
+    val vehicleData: DStream[String] = geelyData.union(sgmwData)
 
     val persistsData: DStream[String] = vehicleData.persist(StorageLevel.MEMORY_ONLY)
 
@@ -193,7 +188,7 @@ object WarningSteaming  extends Serializable{
               partitions.foreach(record => {
                 //插入
                 if(record._2 == true) {
-                  val insert_sql = "insert into app_alarm_divide_ps(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                  val insert_sql = "insert into app_alarm_divide_dwd(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                     .format(record._1.vin
                       , record._1.start_time
                       , record._1.alarm_type
@@ -243,10 +238,7 @@ object WarningSteaming  extends Serializable{
     )
 
 
-    initStream.foreachRDD(rdd => {
-      var offsetRanges: Array[OffsetRange] = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
-      initStream.asInstanceOf[CanCommitOffsets].commitAsync(offsetRanges)
-    })
+
 
     ssc.start()
     ssc.awaitTermination()
