@@ -19,7 +19,6 @@ import com.neuexample.utils.GetConfig
 import com.neuexample.utils.GetConfig._
 import org.apache.log4j.{Logger, PropertyConfigurator}
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.rdd.RDD
 
 
 object WarningSteaming  extends Serializable{
@@ -69,7 +68,7 @@ object WarningSteaming  extends Serializable{
     val df_gps_bc = ssc.sparkContext.broadcast(df_gps.collect())
 
     //alarm监控列表
-    val alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage"
+    val alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage,abnormalCollect"
 
     val bc_alarmSet: Broadcast[Set[String]] = ssc.sparkContext.broadcast(alarms.split(",").toSet)
 
@@ -115,12 +114,13 @@ object WarningSteaming  extends Serializable{
           var alarms = new ArrayBuffer[((String,String),Alarm)]()
           iterable.foreach( line => {
 
+            val cityStr: String = parseCity(line)
             for(alarm_column <- bc_alarmSet.value) {
-              // println(alarm_column)
-              val this_alarm = parseAlarm(line, alarm_column,parseCity(line))
-             if (this_alarm.alarm_val != 0) {
-              alarms.append(((this_alarm.vin, this_alarm.alarm_type), this_alarm))
-             }
+
+              val this_alarm = parseAlarm(line, alarm_column,cityStr)
+               if (this_alarm.alarm_val != 0) {
+                alarms.append(((this_alarm.vin, this_alarm.alarm_type), this_alarm))
+               }
             }
           }
         )

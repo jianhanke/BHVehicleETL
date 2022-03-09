@@ -12,19 +12,14 @@ import org.apache.spark.streaming.dstream.{DStream, MapWithStateDStream}
 object Geely extends Serializable{
 
 
-  val func_state_geely = ( key:String,values:Option[JSONObject],state:State[JSONObject] ) => {
+
+
+  val func_state_geely = (key:String, values:Option[JSONObject], state:State[JSONObject] ) => {
 
 
     val old_obj: JSONObject = state.getOption().getOrElse(null)
     val obj: JSONObject = values.get
 
-
-
-//    if(old_obj!=null) {
-//      println("curTime:" + obj.getInteger("timeStamp") + ",lastTime:" + old_obj.getInteger("timeStamp") + ",diff:" + (
-//        obj.getInteger("timeStamp") - old_obj.getInteger("timeStamp")
-//        ))
-//    }
 
     if(old_obj != null){
       isSocHigh(old_obj,obj);
@@ -32,6 +27,9 @@ object Geely extends Serializable{
       isElectricBoxWithWater(old_obj,obj);
       isSocJump(old_obj,obj);
       isBatteryHighTemperature(old_obj,obj);
+
+      isAbnormalCollect(old_obj,obj);
+
     }
     state.update(obj);
     obj.toString;
@@ -40,8 +38,8 @@ object Geely extends Serializable{
   def addGeelyApi(persistsParts: DStream[String]): DStream[String] = {
 
     println("geely come")
-    val geelyVin2Json: DStream[(String, JSONObject)] = addGeelyAlarm(persistsParts)
-    geelyVin2Json.mapWithState(StateSpec.function(func_state_geely))
+
+    addGeelyAlarm(persistsParts).mapWithState(StateSpec.function(func_state_geely))
 
   }
 
@@ -50,17 +48,15 @@ object Geely extends Serializable{
     val vin2Json: DStream[(String, JSONObject)] = persistsParts.map {
 
       line => {
-      // println("geely comeing")
-        val json: JSONObject = JSON.parseObject(line)
-        val vin: String = json.getString("vin")
 
-        val timeStamp: Long = mkctime(json.getInteger("year")
+        val json: JSONObject = JSON.parseObject(line)
+
+        json.put("timeStamp", mkctime(json.getInteger("year")
           , json.getInteger("month")
           , json.getInteger("day")
           , json.getInteger("hours")
           , json.getInteger("minutes")
-          , json.getInteger("seconds"))
-        json.put("timeStamp", timeStamp);
+          , json.getInteger("seconds")));
 
 
         isMonomerBatteryUnderVoltage(json);
@@ -76,7 +72,7 @@ object Geely extends Serializable{
        //  isAbnormalTemperature(json);
        //  isAbnormalVoltage(json);
 
-        (vin, json);
+        (json.getString("vin"), json);
       }
     }
     vin2Json
@@ -147,6 +143,32 @@ object Geely extends Serializable{
     }
   }
 
+  def isAbnormalCollect(old_json: JSONObject, json: JSONObject)  {
+
+    var cycleCount: Integer = old_json.getIntValue("cycleCount") + 1;
+
+    var batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage");
+    if(batteryMaxVoltage != null &&  batteryMaxVoltage >= 65534){
+
+        var abnormalTemperatureCount = old_json.getIntValue("abnormalTemperatureCount") + 1;
+
+        if(abnormalTemperatureCount == 8){
+          json.put("abnormalCollect",2);
+        }else if(abnormalTemperatureCount == 5){
+          json.put("abnormalCollect",1);
+        }
+        json.put("abnormalTemperatureCount",abnormalTemperatureCount);
+    }
+
+    if(cycleCount < 20){
+      json.put("cycleCount",cycleCount);
+    }else{
+      json.remove("cycleCount")
+      json.remove("abnormalTemperatureCount")
+    }
+  }
+
+
   def isBatteryHighTemperature(old_json: JSONObject,json: JSONObject): Unit = {
 
     val insulationResistance: Integer = json.getInteger("insulationResistance")
@@ -209,14 +231,11 @@ object Geely extends Serializable{
     val soc: Integer = json.getInteger("soc")
     val maxTemperature: Integer = json.getInteger("maxTemperature")
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
-
     val current: Integer = json.getInteger("current")
 
     if(timeStamp != null && old_timeStamp != null && soc != null && maxTemperature != null && maxCellVoltage != null && current != null && current == 0  && soc <= 40 && timeStamp - old_timeStamp >= 3600 && timeStamp - old_timeStamp <= 86400    ) {
-
       val socMax: Double = calculateSoc(maxTemperature,maxCellVoltage )
       val timeDiff: Int = timeStamp - old_timeStamp
-      
       val socSelfDis: Double = timeDiff / 1800 * 0.25
 
       if(soc - socMax - socSelfDis >= 10){
@@ -440,27 +459,5 @@ object Geely extends Serializable{
 
 
   }
-
-
-  /*
-  def insertSqlError(str:String,vin:String): Unit ={
-
-
-        val conn = getMysqlConn(properties)
-       try{
-
-         var sql=" insert into test_error (vin,error_text) values('%s','%s')".format(vin,str);
-         conn.prepareStatement(sql).executeUpdate()
-       }catch {
-         case ex: Exception => {
-           System.err.println("Process one data error, but program will continue! ", ex)
-         }
-       }
-       finally{
-         conn.close()
-       }
-
-  }
-  */
 
 }

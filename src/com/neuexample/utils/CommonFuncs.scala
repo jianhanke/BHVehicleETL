@@ -47,7 +47,9 @@ object CommonFuncs {
     try {
       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%02d-%02d-%02d %02d:%02d:%02d".format(year, month, day, hours, minutes, seconds)).getTime / 1000
     }catch {
-      case e=> return 0;
+      case ex:Exception => {
+        return 0;
+      }
     }
   }
 
