@@ -14,6 +14,14 @@ object Geely extends Serializable{
 
 
 
+  def addGeelyApi(persistsParts: DStream[String]): DStream[String] = {
+
+    println("geely come")
+
+    addGeelyAlarm(persistsParts).mapWithState(StateSpec.function(func_state_geely))
+
+  }
+
   val func_state_geely = (key:String, values:Option[JSONObject], state:State[JSONObject] ) => {
 
 
@@ -29,19 +37,11 @@ object Geely extends Serializable{
       isBatteryHighTemperature(old_obj,obj);
 
       isAbnormalCollect(old_obj,obj);
-
     }
     state.update(obj);
     obj.toString;
   }
 
-  def addGeelyApi(persistsParts: DStream[String]): DStream[String] = {
-
-    println("geely come")
-
-    addGeelyAlarm(persistsParts).mapWithState(StateSpec.function(func_state_geely))
-
-  }
 
   def addGeelyAlarm(persistsParts: DStream[String]): DStream[(String, JSONObject)] = {
 
@@ -51,7 +51,7 @@ object Geely extends Serializable{
 
         val json: JSONObject = JSON.parseObject(line)
 
-        json.put("timeStamp", mkctime(json.getInteger("year")
+        json.put("ctime", mkctime(json.getInteger("year")
           , json.getInteger("month")
           , json.getInteger("day")
           , json.getInteger("hours")
@@ -127,19 +127,19 @@ object Geely extends Serializable{
   }
 
   def isSocJump(old_json:JSONObject,json:JSONObject): Unit = {
-    val timeStamp: Integer = json.getInteger("timeStamp")
-    val old_timeStamp: Integer = old_json.getInteger("timeStamp")
+    val ctime: Integer = json.getInteger("ctime")
+    val old_ctime: Integer = old_json.getInteger("ctime")
     val soc: Integer = json.getInteger("soc")
     val old_soc: Integer = old_json.getInteger("soc")
     val current: Integer = json.getInteger("current")
 
-    if(soc != null && old_soc != null  && current != null  && math.abs(soc-old_soc) >= 8 && math.abs(current) > 30000 && timeStamp > old_timeStamp && timeStamp-old_timeStamp < 30     ){
+    if(soc != null && old_soc != null  && current != null  && math.abs(soc-old_soc) >= 8 && math.abs(current) > 30000 && ctime > old_ctime && ctime-old_ctime < 30     ){
       json.put("socJump",2);
       json.put("soc_jump_value",math.abs(soc - old_soc))
       json.put("current",math.abs(current));
-      json.put("soc_jump_time",timeStamp - old_timeStamp)
+      json.put("soc_jump_time",ctime - old_ctime)
       json.put("current",current);
-      json.put("last_start_time",old_timeStamp)
+      json.put("last_start_time",old_ctime)
     }
   }
 
@@ -177,7 +177,7 @@ object Geely extends Serializable{
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
     val totalVoltage: Integer = json.getInteger("totalVoltage")
-    val old_timeStamp: Integer = old_json.getInteger("timeStamp")
+    val old_ctime: Integer = old_json.getInteger("ctime")
 
     if(batteryMaxVoltage != null && batteryMinVoltage != null && totalVoltage != null  && batteryMaxVoltage - batteryMinVoltage >= 400
       && insulationResistance != null && insulationResistance / (totalVoltage / 1000.0) <= 500 && maxTemperature != null && old_maxTemperature != null )
@@ -186,24 +186,24 @@ object Geely extends Serializable{
         if(  temperatureDiff > 30 || maxTemperature == 87   ){     //删除87度
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",3);
-          json.put("last_start_time",old_timeStamp)
+          json.put("last_start_time",old_ctime)
         }else if(  temperatureDiff > 20 && temperatureDiff <= 30   ){
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",2);
-          json.put("last_start_time",old_timeStamp)
+          json.put("last_start_time",old_ctime)
         }else if(  temperatureDiff >= 15 && temperatureDiff <= 20     ){
           json.put("temperature_diff",temperatureDiff)
           json.put("batteryHighTemperature",1);
-          json.put("last_start_time",old_timeStamp)
+          json.put("last_start_time",old_ctime)
         }
       }
 
   }
 
   def isElectricBoxWithWater(old_json: JSONObject,json: JSONObject): Unit = {
-    val timeStamp: Integer = json.getInteger("timeStamp")
-    val old_timeStamp: Integer = old_json.getInteger("timeStamp")
-    val secondsDiff: Integer = timeStamp - old_timeStamp
+    val ctime: Integer = json.getInteger("ctime")
+    val old_ctime: Integer = old_json.getInteger("ctime")
+    val secondsDiff: Integer = ctime - old_ctime
 
     val insulationResistance: Integer = json.getInteger("insulationResistance")
     val totalVoltage: Integer = json.getInteger("totalVoltage")
@@ -218,7 +218,7 @@ object Geely extends Serializable{
     {
       json.put("electricBoxWithWater",1);
       json.put("total_voltage_drop_rate",(totalVoltage - old_totalVoltage) / 1000.0 /secondsDiff);
-      json.put("last_start_time",old_timeStamp)
+      json.put("last_start_time",old_ctime)
     }
 
 
@@ -226,51 +226,51 @@ object Geely extends Serializable{
 
   def isSocHigh(old_json: JSONObject,json: JSONObject) {
 
-    val timeStamp: Integer = json.getInteger("timeStamp")
-    val old_timeStamp: Integer = old_json.getInteger("timeStamp")
+    val ctime: Integer = json.getInteger("ctime")
+    val old_ctime: Integer = old_json.getInteger("ctime")
     val soc: Integer = json.getInteger("soc")
     val maxTemperature: Integer = json.getInteger("maxTemperature")
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val current: Integer = json.getInteger("current")
 
-    if(timeStamp != null && old_timeStamp != null && soc != null && maxTemperature != null && maxCellVoltage != null && current != null && current == 0  && soc <= 40 && timeStamp - old_timeStamp >= 3600 && timeStamp - old_timeStamp <= 86400    ) {
+    if(ctime != null && old_ctime != null && soc != null && maxTemperature != null && maxCellVoltage != null && current != null && current == 0  && soc <= 40 && ctime - old_ctime >= 3600 && ctime - old_ctime <= 86400    ) {
       val socMax: Double = calculateSoc(maxTemperature,maxCellVoltage )
-      val timeDiff: Int = timeStamp - old_timeStamp
+      val timeDiff: Int = ctime - old_ctime
       val socSelfDis: Double = timeDiff / 1800 * 0.25
 
       if(soc - socMax - socSelfDis >= 10){
         json.put("socHigh", 2);
         json.put("soc_high_value",soc - socMax - socSelfDis);
         json.put("soc_high_time", timeDiff)
-        json.put("last_start_time",old_timeStamp)
+        json.put("last_start_time",old_ctime)
       }else if ( soc - socMax >= 10) {
         json.put("socHigh", 1);
         json.put("soc_high_value", soc - socMax);
         json.put("soc_high_time", timeDiff)
-        json.put("last_start_time",old_timeStamp)
+        json.put("last_start_time",old_ctime)
       }
     }
   }
 
   def isSocNotBalance(old_json: JSONObject,json: JSONObject) {
 
-    val timeStamp: Integer = json.getInteger("timeStamp")
-    val old_timeStamp: Integer = old_json.getInteger("timeStamp")
+    val ctime: Integer = json.getInteger("ctime")
+    val old_ctime: Integer = old_json.getInteger("ctime")
 
     val avgTemperature: lang.Double = json.getDouble("temperature")
     val current: Integer = json.getInteger("current")
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
 
-    if(timeStamp != null && old_timeStamp != null  && current != null && current == 0 && batteryMaxVoltage != null && batteryMinVoltage != null && timeStamp - old_timeStamp >= 3600 && timeStamp - old_timeStamp <= 86400) {
+    if(ctime != null && old_ctime != null  && current != null && current == 0 && batteryMaxVoltage != null && batteryMinVoltage != null && ctime - old_ctime >= 3600 && ctime - old_ctime <= 86400) {
       val socMax: Double = calculateSoc(avgTemperature,batteryMaxVoltage)
       val socMin: Double = calculateSoc(avgTemperature,batteryMinVoltage)
 
       if(socMax - socMin >= 10){
         json.put("socNotBalance",1);
         json.put("soc_diff_value",socMax - socMin);
-        json.put("soc_notbalance_time",timeStamp - old_timeStamp);
-        json.put("last_start_time",old_timeStamp);
+        json.put("soc_notbalance_time",ctime - old_ctime);
+        json.put("last_start_time",old_ctime);
       }
     }
   }

@@ -4,9 +4,11 @@ object MyTest {
 
   def main(args: Array[String]): Unit = {
 
-    val list = Array(1,2,3)
+    var time = 36000;
 
-    println(list.mkString("[", ",", "]"))
+    val i: Int = time / 1800
+
+    println(i * 0.25)
 
   }
 
