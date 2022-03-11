@@ -4,11 +4,20 @@ object MyTest {
 
   def main(args: Array[String]): Unit = {
 
-    var time = 36000;
 
-    val i: Int = time / 1800
 
-    println(i * 0.25)
+    val array = Array(("1","2","3","4",5.0),("1","2","3","4",6.0))
+
+    val tuple1: Array[(String, String, String, String, Double)] = array.take(1)
+
+    val tuple2: (String, String, String, String, Double) = array(0)
+
+    println(tuple1.mkString(","))
+    println(tuple2.toString())
+
+
+    println(tuple2.productIterator.mkString(","))
+
 
   }
 

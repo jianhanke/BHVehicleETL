@@ -1,5 +1,7 @@
 package com.neuexample.streaming
 
+import java.lang
+
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.neuexample.entry.Alarm
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -11,13 +13,10 @@ import org.apache.spark.streaming.dstream.{DStream, MapWithStateDStream}
 import scala.collection.mutable.ArrayBuffer
 import com.neuexample.utils.CommonFuncs._
 import org.apache.spark.storage.StorageLevel
-import java.util.Properties
-
 import com.neuexample.streaming.Geely._
 import com.neuexample.streaming.Sgmw._
 import com.neuexample.utils.GetConfig
 import com.neuexample.utils.GetConfig._
-import org.apache.log4j.{Logger, PropertyConfigurator}
 import org.apache.spark.broadcast.Broadcast
 
 
@@ -35,15 +34,16 @@ object WarningSteaming  extends Serializable{
       .appName("SparkStreamingKafkaDirexct")
       .getOrCreate()
 
-    val sc = spark.sparkContext
-    sc.setLogLevel("ERROR");
+     spark.sparkContext.setLogLevel("ERROR")
 
-
-    val ssc =  new StreamingContext(sc, batchDuration = Seconds(2))
+    val ssc =  new StreamingContext(spark.sparkContext, batchDuration = Seconds(2))
     ssc.checkpoint(properties.getProperty("checkpoint.dir"));
 
     val df_gps = spark.sparkContext.textFile("gps.csv").cache()
-    val df_gps_bc = ssc.sparkContext.broadcast(df_gps.collect())
+    val bc_df_gps = ssc.sparkContext.broadcast(df_gps.collect())
+    //alarm监控列表
+    val all_alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage,abnormalCollect"
+    val bc_all_alarms: Broadcast[Set[String]] = ssc.sparkContext.broadcast(all_alarms.split(",").toSet)
 
     // Kafka配置参数
     val kafkaParams: Map[String, Object] = Map[String, Object](
@@ -56,29 +56,47 @@ object WarningSteaming  extends Serializable{
       "enable.auto.commit" -> "true"
     )
 
+
+    def parseCity(lon: lang.Double, lat: lang.Double) :String ={
+      var locate = " , , , "
+      if(lon != null && lat != null) {
+        locate = locateCityRDD(lon / 1000000, lat / 1000000, bc_df_gps.value)
+      }
+      locate
+    }
+
+    def getAlarms(json :JSONObject) :ArrayBuffer[(String,Integer)] ={
+
+      val array = scala.collection.mutable.ArrayBuffer[(String,Integer)]()
+      val vehicleFactory: Integer = json.getInteger("vehicleFactory")
+      var level = json.getIntValue("level")
+
+      if(vehicleFactory == 1 || vehicleFactory == 5){      // 自定义算法
+        for(alarm_type <- bc_all_alarms.value){
+          level = json.getIntValue(alarm_type)
+          if(level != 0){
+            array += Tuple2(alarm_type, level);
+          }
+        }
+      }else{
+        if(level < 1 || level > 3 ){
+          level = 1
+        }
+        for(alarm_type <- bc_all_alarms.value){
+          if(json.getBooleanValue(alarm_type)){
+            array += Tuple2(alarm_type, level);
+          }
+        }
+      }
+      array
+    }
+
     // 用Kafka Direct API直接读数据
     val initStream = KafkaUtils.createDirectStream[String, String](
       ssc,
       LocationStrategies.PreferConsistent,
       ConsumerStrategies.Subscribe[String, String](properties.getProperty("kafka.topic").split(",").toSet, kafkaParams)
     )
-
-
-    //alarm监控列表
-    val alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage,abnormalCollect"
-
-    val bc_alarmSet: Broadcast[Set[String]] = ssc.sparkContext.broadcast(alarms.split(",").toSet)
-
-    def parseCity(jsonstr:String) :String ={
-      val jsonobject :JSONObject = JSON.parseObject(jsonstr)
-      val lon = jsonobject.getDouble("longitude")
-      val lat = jsonobject.getDouble("latitude")
-      var locate = " , , , "
-      if(lon != null && lat != null) {
-        locate = locateCityRDD(lon / 1000000, lat / 1000000, df_gps_bc.value)
-      }
-      locate
-    }
 
     val persistsParts: DStream[String] = initStream.map(_.value()).persist(StorageLevel.MEMORY_ONLY)
 
@@ -111,14 +129,19 @@ object WarningSteaming  extends Serializable{
           var alarms = new ArrayBuffer[((String,String),Alarm)]()
           iterable.foreach( line => {
 
-            val cityStr: String = parseCity(line)
-            for(alarm_column <- bc_alarmSet.value) {
+            val json: JSONObject = JSON.parseObject(line)
+            var all_alarms: ArrayBuffer[(String, Integer)] = getAlarms(json)
 
-              val this_alarm = parseAlarm(line, alarm_column,cityStr)
-               if (this_alarm.alarm_val != 0) {
-                alarms.append(((this_alarm.vin, this_alarm.alarm_type), this_alarm))
-               }
+            if(! all_alarms.isEmpty){
+              var alarmBean = parseAlarm(json ,parseCity(json.getDouble("longitude"),json.getDouble("latitude")))
+              for( (alarm_type,alarm_level) <- all_alarms ){
+                  var clone: Alarm = alarmBean.clone()
+                  clone.alarm_type = alarm_type
+                  clone.level = alarm_level
+                  alarms.append(((clone.vin, clone.alarm_type), clone))
+              }
             }
+
           }
         )
         alarms.iterator
@@ -243,27 +266,9 @@ object WarningSteaming  extends Serializable{
   }
 
 
-  def parseAlarm(jsonstr:String,alarm_type :String,cityStr :String) :Alarm ={
-    val json :JSONObject = JSON.parseObject(jsonstr)
-
+  def parseAlarm(json :JSONObject, cityStr :String) :Alarm ={
 
     val vehicleFactory: Int = json.getInteger("vehicleFactory")
-    var level = json.getInteger("level")
-
-    if (vehicleFactory == 5 ||  vehicleFactory == 1  ) { // 只处理吉利车
-      level=json.getInteger(alarm_type);
-    }
-    //告警等级
-    if (level != null && level > 0 && level < 4 ){
-
-    }else{
-      level = 1
-    }
-
-//    if(vehicleFactory == 2  ){  // 暂时将 江淮发的警报置为空，后续如果单独添设计江淮警报，删除此行。
-//          json.put(alarm_type,false);
-//    }
-
 
     if(vehicleFactory != 5){
       json.put("ctime",mkctime(json.getInteger("year")
@@ -274,19 +279,14 @@ object WarningSteaming  extends Serializable{
         ,json.getInteger("seconds")));
     }
 
-    json.put("alarm_type",alarm_type);
-    json.put("alarm_val",json.getIntValue(alarm_type))
-    json.put("level",level);
-
-
-
+    // (i18n_内蒙古自治区,i18n_巴彦淖尔市,i18n_磴口县,north,1.8326636882091768E7)
+    //  , , ,
     // (i18n_内蒙古自治区,i18n_巴彦淖尔市,i18n_磴口县,north,1.8326636882091768E7)
     val cityArray: Array[String] = cityStr.split(",")
     json.put("province",cityArray(0));
     json.put("city",cityArray(1));
     json.put("area",cityArray(2));
     json.put("region",cityArray(3));
-
 
     JSON.toJavaObject(json,classOf[Alarm])
   }

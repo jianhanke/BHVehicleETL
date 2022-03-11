@@ -1,7 +1,7 @@
 package com.neuexample.entry
 
 
-class Alarm() extends  Serializable {
+class Alarm() extends  Serializable with Cloneable {
 
   var vin:String =  ""
   var start_time:Long = 0
@@ -282,4 +282,9 @@ class Alarm() extends  Serializable {
     this.soc_high_time = soc_high_time
   }
 
+  override def clone(): Alarm = {
+
+    super.clone().asInstanceOf[Alarm]
+
+  }
 }
