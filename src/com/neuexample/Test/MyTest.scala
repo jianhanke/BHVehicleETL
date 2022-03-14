@@ -16,7 +16,7 @@ object MyTest {
     println(tuple2.toString())
 
 
-    println(tuple2.productIterator.mkString(","))
+
 
 
   }
