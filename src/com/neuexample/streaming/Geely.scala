@@ -258,7 +258,7 @@ object Geely extends Serializable{
     val ctime: Integer = json.getInteger("ctime")
     val old_ctime: Integer = old_json.getInteger("ctime")
 
-    val avgTemperature: lang.Double = json.getDouble("temperature")
+    val avgTemperature: Integer = json.getInteger("temperature")
     val current: Integer = json.getInteger("current")
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
