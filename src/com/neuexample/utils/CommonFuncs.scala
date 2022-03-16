@@ -13,7 +13,7 @@ object CommonFuncs {
     * @param str  ["1","2","3]
     * @return      Array[1,2,3]
     */
-  def stringToIntArray(str:String):Array[Int]={
+  def stringToIntArray(str: String): Array[Int]={
 
     if(str!=null && str.length>2) {
       val strArr: Array[String] = str.substring(1, str.length - 1).split(",")
@@ -29,25 +29,25 @@ object CommonFuncs {
   /*
   *日期转时间戳
    */
-  def getTimestamp(x : String) : Long  = {
+  def getTimestamp(x: String): Long  = {
     val format = new SimpleDateFormat("yyyyMMdd")
     format.parse(x).getTime/1000
   }
   /*
-    *func:组合被拆解的ctime
+    *func: 组合被拆解的ctime
      */
-  val udf_mkctime = udf((year:Int,month:Int,day:Int,hours:Int,minutes:Int,seconds:Int)=>{
-    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%02d-%02d-%02d %02d:%02d:%02d".format(year,month,day,hours,minutes,seconds)).getTime/1000
+  val udf_mkctime = udf((year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int)=>{
+    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%02d-%02d-%02d %02d:%02d:%02d".format(year, month, day, hours, minutes, seconds)).getTime/1000
   })
   /*
-      *func:组合被拆解的ctime,function版
+      *func: 组合被拆解的ctime, function版
        */
-  def mkctime (year:Int,month:Int,day:Int,hours:Int,minutes:Int,seconds:Int) :Long ={
-    //println("year:"+year+",month:"+month+",day:"+day+",hours:"+hours+",minutes:"+minutes+",seconds"+seconds);
+  def mkctime (year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int): Long ={
+    //println("year: "+year+", month: "+month+", day: "+day+", hours: "+hours+", minutes: "+minutes+", seconds"+seconds);
     try {
       new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%02d-%02d-%02d %02d:%02d:%02d".format(year, month, day, hours, minutes, seconds)).getTime / 1000
     }catch {
-      case ex:Exception => {
+      case ex: Exception => {
         return 0;
       }
     }
@@ -78,23 +78,23 @@ object CommonFuncs {
   /*
   *获取经纬度DataFrame
    */
-  def locateCity(lon :Double,lat:Double,df_gps :DataFrame): String ={
+  def locateCity(lon: Double, lat: Double, df_gps: DataFrame): String ={
     val tmp_df = df_gps
-    val out_df = tmp_df.withColumn("distance",pow(col("lat") - lat,2) + pow(col("lon") - lon,2))
+    val out_df = tmp_df.withColumn("distance", pow(col("lat") - lat, 2) + pow(col("lon") - lon, 2))
       .orderBy(col("distance"))
       .limit(1)
-      .select("area","city","province","region")
+      .select("area", "city", "province", "region")
     out_df.collect()(0).mkString(",")
   }
   /*
     *获取经纬度RDD
      */
-  def locateCityRDD(lon :Double ,lat :Double,gps_rdd :Array[String]) :String={
+  def locateCityRDD(lon: Double, lat: Double, gps_rdd: Array[String]): String={
     val current_place = gps_rdd.map(rdd =>{
       val splits = rdd.split(",")
       val llat = splits(3).toDouble
       val llon = splits(4).toDouble
-      (splits(0),splits(1),splits(2),splits(5),(llat - lat) * (llat - lat) + (llon - lon) * (llon - lon))
+      (splits(0), splits(1), splits(2), splits(5), (llat - lat) * (llat - lat) + (llon - lon) * (llon - lon))
     }).sortBy(x => x._5)
       .take(1)
     current_place.mkString(",")
