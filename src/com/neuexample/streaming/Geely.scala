@@ -37,6 +37,7 @@ object Geely extends Serializable{
       isBatteryHighTemperature(old_obj,obj);
 
       isAbnormalCollect(old_obj,obj);
+      isInsulation(old_obj,obj);
     }
     state.update(obj);
     obj.toString;
@@ -65,7 +66,7 @@ object Geely extends Serializable{
         isDeviceTypeOverVoltage(json);
 
         isBatteryConsistencyPoor(json);
-        isInsulation(json);
+
 
         isOutFactorySafetyInspection(json);
 
@@ -287,21 +288,41 @@ object Geely extends Serializable{
   }
 
 
-  def isInsulation(json: JSONObject){
-    val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
+  def isInsulation(old_json: JSONObject,json: JSONObject){
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val insulationResistance: Integer = json.getInteger("insulationResistance")
+    var insulationCount: Int = old_json.getIntValue("insulationCount")
+    var level = 0;
 
-    json.put("insulation",0);    // 去掉车厂发过来的绝缘值
-    if(insulationResistance != null && totalVoltage != null && minCellVoltage != null  && insulationResistance > 0  ){
-
-      if(insulationResistance / (totalVoltage / 1000.0) < 100  ){
-          json.put("insulation",3);
-      }else if(insulationResistance / (totalVoltage / 1000.0) < 500 ) {
-          json.put("insulation",2);
+    if(insulationResistance != null && totalVoltage != null && insulationResistance > 0  ){
+      if(totalVoltage <= 1000000) {
+        if (insulationResistance / (totalVoltage / 1000.0) < 100) {
+          level = 3;
+          insulationCount += 1;
+        } else if (insulationResistance / (totalVoltage / 1000.0) < 500) {
+          level = 2;
+          insulationCount += 1;
+        }else{
+          insulationCount -= 1;
+        }
+      }else{
+        if(insulationResistance < 35000 ){
+          insulationCount += 1;
+          level = 3;
+        }else if(insulationResistance < 175000 ){
+          insulationCount += 1;
+          level = 2;
+        }else{
+          insulationCount -= 1;
+        }
       }
-
+    }else{
+      insulationCount -= 1;
     }
+    if(insulationCount == 2){
+      json.put("insulation", level);
+    }
+    json.put("insulationCount", insulationCount % 2);
 
   }
 

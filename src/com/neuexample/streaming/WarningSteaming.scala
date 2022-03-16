@@ -169,8 +169,8 @@ object WarningSteaming  extends Serializable{
       var cur_alarm :Alarm = values.get
 
       if(last_alarm==null){
-
-        if( cur_alarm.alarm_type.equals("socHigh") || cur_alarm.alarm_type.equals("socNotBalance") ){  //socHigh不单独判断，则永远无法判断。
+        // 无需连续两次
+        if( cur_alarm.alarm_type.equals("socHigh") || cur_alarm.alarm_type.equals("socNotBalance")   || cur_alarm.alarm_type.equals("insulation") ){  //单独判断，则永远无法判断。
           (cur_alarm,true);
         }else {
           state.update(cur_alarm);
@@ -216,7 +216,7 @@ object WarningSteaming  extends Serializable{
               partitions.foreach(record => {
                 //插入
                 if(record._2 == true) {
-                  val insert_sql = "insert into app_alarm_divide_dwd(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                  val insert_sql = "insert into app_alarm_divide_ps(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                     .format(record._1.vin
                       , record._1.start_time
                       , record._1.alarm_type
