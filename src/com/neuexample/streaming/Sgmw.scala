@@ -80,16 +80,16 @@ object Sgmw extends Serializable{
   //判断单体电池过压
   def isMonomerBatteryOverVoltage(json: JSONObject){
 
-    json.put("monomerBatteryOverVoltage",false);
+    json.put("monomerBatteryOverVoltage", false);
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     if(maxCellVoltage != null) {
       if (maxCellVoltage >= 3750) {
-        json.put("monomerBatteryOverVoltage",3);
+        json.put("monomerBatteryOverVoltage", 3);
       } else if (maxCellVoltage >= 3700) {
-        json.put("monomerBatteryOverVoltage",2);
+        json.put("monomerBatteryOverVoltage", 2);
       } else if (maxCellVoltage >= 3680) {
-        json.put("monomerBatteryOverVoltage",1);
+        json.put("monomerBatteryOverVoltage", 1);
       }
     }
   }
@@ -97,7 +97,7 @@ object Sgmw extends Serializable{
   //判断总电池欠压
   def isDeviceTypeUnderVoltage(json: JSONObject){
 
-    json.put("deviceTypeUnderVoltage",false);
+    json.put("deviceTypeUnderVoltage", false);
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
@@ -105,11 +105,11 @@ object Sgmw extends Serializable{
 
     if(totalVoltage != null  && cellCount != null && minCellVoltage != null ) {
       if (totalVoltage >= minCellVoltage * cellCount && totalVoltage <= 2000 * cellCount) {
-        json.put("deviceTypeUnderVoltage",3);
+        json.put("deviceTypeUnderVoltage", 3);
       } else if (totalVoltage >= minCellVoltage * cellCount && totalVoltage <= 2300 * cellCount) {
-        json.put("deviceTypeUnderVoltage",2);
+        json.put("deviceTypeUnderVoltage", 2);
       } else if (totalVoltage >= minCellVoltage * cellCount && totalVoltage <= 2500 * cellCount) {
-        json.put("deviceTypeUnderVoltage",1);
+        json.put("deviceTypeUnderVoltage", 1);
       }
     }
   }
@@ -117,18 +117,18 @@ object Sgmw extends Serializable{
   //判断总电池过压
   def isDeviceTypeOverVoltage(json: JSONObject){
 
-    json.put("deviceTypeOverVoltage",false);
+    json.put("deviceTypeOverVoltage", false);
 
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val cellCount: Integer = json.getInteger("cellCount")
 
     if(totalVoltage != null  && cellCount != null ) {
       if (totalVoltage >= 3750 * cellCount) {
-        json.put("deviceTypeOverVoltage",3);
+        json.put("deviceTypeOverVoltage", 3);
       } else if (totalVoltage >= 3700 * cellCount) {
-        json.put("deviceTypeOverVoltage",2);
+        json.put("deviceTypeOverVoltage", 2);
       } else if (totalVoltage >= 3660 * cellCount) {
-        json.put("deviceTypeOverVoltage",1);
+        json.put("deviceTypeOverVoltage", 1);
       }
     }
 
@@ -156,17 +156,17 @@ object Sgmw extends Serializable{
 
   def isBatteryHighTemperature(json: JSONObject){
 
-    json.put("batteryHighTemperature",false);
+    json.put("batteryHighTemperature", false);
 
     val maxTemperature: Integer = json.getInteger("maxTemperature")
 
     if(maxTemperature != null) {
       if (maxTemperature >= 61  && maxTemperature <= 200 ) {
-        json.put("batteryHighTemperature",3);
+        json.put("batteryHighTemperature", 3);
       } else if (maxTemperature >= 60   && maxTemperature <61  ) {
-        json.put("batteryHighTemperature",2);
+        json.put("batteryHighTemperature", 2);
       } else if (maxTemperature >= 55  && maxTemperature < 60 ) {
-        json.put("batteryHighTemperature",1);
+        json.put("batteryHighTemperature", 1);
       }
     }
 
@@ -174,30 +174,30 @@ object Sgmw extends Serializable{
 
   def isSocLow(json: JSONObject){
 
-    json.put("socLow",false);
+    json.put("socLow", false);
 
     val soc: Integer = json.getInteger("soc")
     if(soc != null && soc > 0 &&  soc < 2){
-      json.put("socLow",1);
+      json.put("socLow", 1);
     }
 
   }
 
   def isSocHigh(json: JSONObject){
 
-    json.put("socHigh",false);
+    json.put("socHigh", false);
 
   }
 
   def isTemperatureDifferential(json: JSONObject): Unit ={
 
-    json.put("temperatureDifferential",false);
+    json.put("temperatureDifferential", false);
 
   }
 
   def isSocJump(json: JSONObject): Unit ={
 
-    json.put("socJump",false);
+    json.put("socJump", false);
 
   }
 

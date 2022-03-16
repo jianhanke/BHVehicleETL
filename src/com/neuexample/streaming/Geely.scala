@@ -22,7 +22,7 @@ object Geely extends Serializable{
 
   }
 
-  val func_state_geely = (key:String, values:Option[JSONObject], state:State[JSONObject] ) => {
+  val func_state_geely = (key: String, values: Option[JSONObject], state: State[JSONObject] ) => {
 
 
     val old_obj: JSONObject = state.getOption().getOrElse(null)
@@ -30,14 +30,14 @@ object Geely extends Serializable{
 
 
     if(old_obj != null){
-      isSocHigh(old_obj,obj);
-      isSocNotBalance(old_obj,obj);
-      isElectricBoxWithWater(old_obj,obj);
-      isSocJump(old_obj,obj);
-      isBatteryHighTemperature(old_obj,obj);
+      isSocHigh(old_obj, obj);
+      isSocNotBalance(old_obj, obj);
+      isElectricBoxWithWater(old_obj, obj);
+      isSocJump(old_obj, obj);
+      isBatteryHighTemperature(old_obj, obj);
 
-      isAbnormalCollect(old_obj,obj);
-      isInsulation(old_obj,obj);
+      isAbnormalCollect(old_obj, obj);
+      isInsulation(old_obj, obj);
     }
     state.update(obj);
     obj.toString;
@@ -82,7 +82,7 @@ object Geely extends Serializable{
   }
 
 
-  def isAbnormalVoltage(json:JSONObject): Unit = {
+  def isAbnormalVoltage(json: JSONObject): Unit = {
 
     val cellVoltageArray: Array[Int] = stringToIntArray(json.getString("cellVoltages"))
     val batteryMaxVoltage: Integer = json.getInteger("batteryMaxVoltage")
@@ -95,17 +95,15 @@ object Geely extends Serializable{
       val downBoundary: Double = quartile._1 - 1.5 * IQR
 
       if( batteryMaxVoltage > upperBoundary || batteryMaxVoltage < downBoundary ||  batteryMinVoltage > upperBoundary || batteryMinVoltage < downBoundary   ){
-
-          // println("Q3,Q1:"+quartile+",up:"+upperBoundary+",down:"+downBoundary+",maxV:"+batteryMaxVoltage+",minV:"+batteryMinVoltage);
-          json.put("abnormalVoltage",1);
-          json.put("voltage_uppder_boundary",upperBoundary)
-          json.put("voltage_down_boundary",downBoundary)
+          json.put("abnormalVoltage", 1);
+          json.put("voltage_uppder_boundary", upperBoundary)
+          json.put("voltage_down_boundary", downBoundary)
       }
     }
 
   }
 
-  def isAbnormalTemperature(json:JSONObject): Unit = {
+  def isAbnormalTemperature(json: JSONObject): Unit = {
 
     val probeTeptureArray: Array[Int] = stringToIntArray(json.getString("probeTemperatures"))
     val maxTemperature: Integer = json.getInteger("maxTemperature")
@@ -119,15 +117,14 @@ object Geely extends Serializable{
       var upperBoundary = quartile._2 + 1.5 * IQR;
       val downBoundary: Double = quartile._1 - 1.5 * IQR
       if( maxTemperature > upperBoundary || maxTemperature < downBoundary ||  minTemperature > upperBoundary || minTemperature < downBoundary   ){
-        //println("Q3,Q1:" +quartile+ ",up:"+upperBoundary+",down:"+downBoundary+",maxT:"+maxTemperature+",minT:"+minTemperature);
-        json.put("abnormalTemperature",1);
-        json.put("temperature_uppder_boundary",upperBoundary);
-        json.put("temperature_down_boundary",downBoundary);
+        json.put("abnormalTemperature", 1);
+        json.put("temperature_uppder_boundary", upperBoundary);
+        json.put("temperature_down_boundary", downBoundary);
       }
     }
   }
 
-  def isSocJump(old_json:JSONObject,json:JSONObject): Unit = {
+  def isSocJump(old_json: JSONObject, json: JSONObject): Unit = {
     val ctime: Integer = json.getInteger("ctime")
     val old_ctime: Integer = old_json.getInteger("ctime")
     val soc: Integer = json.getInteger("soc")
@@ -135,12 +132,12 @@ object Geely extends Serializable{
     val current: Integer = json.getInteger("current")
 
     if(soc != null && old_soc != null  && current != null  && math.abs(soc-old_soc) >= 8 && math.abs(current) > 30000 && ctime > old_ctime && ctime-old_ctime < 30     ){
-      json.put("socJump",2);
-      json.put("soc_jump_value",math.abs(soc - old_soc))
-      json.put("current",math.abs(current));
-      json.put("soc_jump_time",ctime - old_ctime)
-      json.put("current",current);
-      json.put("last_start_time",old_ctime)
+      json.put("socJump", 2);
+      json.put("soc_jump_value", math.abs(soc - old_soc))
+      json.put("current", math.abs(current));
+      json.put("soc_jump_time", ctime - old_ctime)
+      json.put("current", current);
+      json.put("last_start_time", old_ctime)
     }
   }
 
@@ -154,15 +151,15 @@ object Geely extends Serializable{
         var abnormalTemperatureCount = old_json.getIntValue("abnormalTemperatureCount") + 1;
 
         if(abnormalTemperatureCount == 8){
-          json.put("abnormalCollect",2);
+          json.put("abnormalCollect", 2);
         }else if(abnormalTemperatureCount == 5){
-          json.put("abnormalCollect",1);
+          json.put("abnormalCollect", 1);
         }
-        json.put("abnormalTemperatureCount",abnormalTemperatureCount);
+        json.put("abnormalTemperatureCount", abnormalTemperatureCount);
     }
 
     if(cycleCount < 20){
-      json.put("cycleCount",cycleCount);
+      json.put("cycleCount", cycleCount);
     }else{
       json.remove("cycleCount")
       json.remove("abnormalTemperatureCount")
@@ -170,7 +167,7 @@ object Geely extends Serializable{
   }
 
 
-  def isBatteryHighTemperature(old_json: JSONObject,json: JSONObject): Unit = {
+  def isBatteryHighTemperature(old_json: JSONObject, json: JSONObject): Unit = {
 
     val insulationResistance: Integer = json.getInteger("insulationResistance")
     val maxTemperature: Integer = json.getInteger("maxTemperature")
@@ -185,23 +182,23 @@ object Geely extends Serializable{
       {
         val temperatureDiff: Integer = math.abs(maxTemperature-old_maxTemperature)
         if(  temperatureDiff > 30 || maxTemperature == 87   ){     //删除87度
-          json.put("temperature_diff",temperatureDiff)
-          json.put("batteryHighTemperature",3);
-          json.put("last_start_time",old_ctime)
+          json.put("temperature_diff", temperatureDiff)
+          json.put("batteryHighTemperature", 3);
+          json.put("last_start_time", old_ctime)
         }else if(  temperatureDiff > 20 && temperatureDiff <= 30   ){
-          json.put("temperature_diff",temperatureDiff)
-          json.put("batteryHighTemperature",2);
-          json.put("last_start_time",old_ctime)
+          json.put("temperature_diff", temperatureDiff)
+          json.put("batteryHighTemperature", 2);
+          json.put("last_start_time", old_ctime)
         }else if(  temperatureDiff >= 15 && temperatureDiff <= 20     ){
-          json.put("temperature_diff",temperatureDiff)
-          json.put("batteryHighTemperature",1);
-          json.put("last_start_time",old_ctime)
+          json.put("temperature_diff", temperatureDiff)
+          json.put("batteryHighTemperature", 1);
+          json.put("last_start_time", old_ctime)
         }
       }
 
   }
 
-  def isElectricBoxWithWater(old_json: JSONObject,json: JSONObject): Unit = {
+  def isElectricBoxWithWater(old_json: JSONObject, json: JSONObject): Unit = {
     val ctime: Integer = json.getInteger("ctime")
     val old_ctime: Integer = old_json.getInteger("ctime")
     val secondsDiff: Integer = ctime - old_ctime
@@ -217,15 +214,15 @@ object Geely extends Serializable{
       && secondsDiff > 0 &&  secondsDiff <= 15
       &&  (totalVoltage - old_totalVoltage) / 1000.0 / secondsDiff > 0.05 )
     {
-      json.put("electricBoxWithWater",1);
-      json.put("total_voltage_drop_rate",(totalVoltage - old_totalVoltage) / 1000.0 /secondsDiff);
-      json.put("last_start_time",old_ctime)
+      json.put("electricBoxWithWater", 1);
+      json.put("total_voltage_drop_rate", (totalVoltage - old_totalVoltage) / 1000.0 /secondsDiff);
+      json.put("last_start_time", old_ctime)
     }
 
 
   }
 
-  def isSocHigh(old_json: JSONObject,json: JSONObject) {
+  def isSocHigh(old_json: JSONObject, json: JSONObject) {
 
     val ctime: Integer = json.getInteger("ctime")
     val old_ctime: Integer = old_json.getInteger("ctime")
@@ -235,25 +232,25 @@ object Geely extends Serializable{
     val current: Integer = json.getInteger("current")
 
     if(ctime != null && old_ctime != null && soc != null && maxTemperature != null && maxCellVoltage != null && current != null && current == 0  && soc <= 40 && ctime - old_ctime >= 3600 && ctime - old_ctime <= 86400    ) {
-      val socMax: Double = calculateSoc(maxTemperature,maxCellVoltage )
+      val socMax: Double = calculateSoc(maxTemperature, maxCellVoltage )
       val timeDiff: Int = ctime - old_ctime
       val socSelfDis: Double = timeDiff / 1800 * 0.25
 
       if(soc - socMax - socSelfDis >= 10){
         json.put("socHigh", 2);
-        json.put("soc_high_value",soc - socMax - socSelfDis);
+        json.put("soc_high_value", soc - socMax - socSelfDis);
         json.put("soc_high_time", timeDiff)
-        json.put("last_start_time",old_ctime)
+        json.put("last_start_time", old_ctime)
       }else if ( soc - socMax >= 10) {
         json.put("socHigh", 1);
         json.put("soc_high_value", soc - socMax);
         json.put("soc_high_time", timeDiff)
-        json.put("last_start_time",old_ctime)
+        json.put("last_start_time", old_ctime)
       }
     }
   }
 
-  def isSocNotBalance(old_json: JSONObject,json: JSONObject) {
+  def isSocNotBalance(old_json: JSONObject, json: JSONObject) {
 
     val ctime: Integer = json.getInteger("ctime")
     val old_ctime: Integer = old_json.getInteger("ctime")
@@ -264,14 +261,14 @@ object Geely extends Serializable{
     val batteryMinVoltage: Integer = json.getInteger("batteryMinVoltage")
 
     if(ctime != null && old_ctime != null  && current != null && current == 0 && batteryMaxVoltage != null && batteryMinVoltage != null && ctime - old_ctime >= 3600 && ctime - old_ctime <= 86400) {
-      val socMax: Double = calculateSoc(avgTemperature,batteryMaxVoltage)
-      val socMin: Double = calculateSoc(avgTemperature,batteryMinVoltage)
+      val socMax: Double = calculateSoc(avgTemperature, batteryMaxVoltage)
+      val socMin: Double = calculateSoc(avgTemperature, batteryMinVoltage)
 
       if(socMax - socMin >= 10){
-        json.put("socNotBalance",1);
-        json.put("soc_diff_value",socMax - socMin);
-        json.put("soc_notbalance_time",ctime - old_ctime);
-        json.put("last_start_time",old_ctime);
+        json.put("socNotBalance", 1);
+        json.put("soc_diff_value", socMax - socMin);
+        json.put("soc_notbalance_time", ctime - old_ctime);
+        json.put("last_start_time", old_ctime);
       }
     }
   }
@@ -282,13 +279,13 @@ object Geely extends Serializable{
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
     val minCellVoltage: Integer = json.getInteger("batteryMinVoltage")
     if(maxCellVoltage!=null && minCellVoltage!=null && minCellVoltage < 2000){
-      json.put("voltageJump",1);
+      json.put("voltageJump", 1);
     }
 
   }
 
 
-  def isInsulation(old_json: JSONObject,json: JSONObject){
+  def isInsulation(old_json: JSONObject, json: JSONObject){
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     val insulationResistance: Integer = json.getInteger("insulationResistance")
     var insulationCount: Int = old_json.getIntValue("insulationCount")
@@ -335,19 +332,19 @@ object Geely extends Serializable{
     if(minCellVoltage != null && avgTemperature != null  && minCellVoltage <= 4700 ) {
       if (avgTemperature > 0) {               //判断单题电池欠压
         if (minCellVoltage < 2000) {
-          json.put("monomerBatteryUnderVoltage",3);
+          json.put("monomerBatteryUnderVoltage", 3);
         } else if (minCellVoltage < 2450) {
-          json.put("monomerBatteryUnderVoltage",2);
+          json.put("monomerBatteryUnderVoltage", 2);
         } else if (minCellVoltage < 2600) {
-          json.put("monomerBatteryUnderVoltage",1);
+          json.put("monomerBatteryUnderVoltage", 1);
         }
       } else { //当温度 <=0
         if (minCellVoltage < 2000) {
-          json.put("monomerBatteryUnderVoltage",3);
+          json.put("monomerBatteryUnderVoltage", 3);
         } else if (minCellVoltage < 2250) {
-          json.put("monomerBatteryUnderVoltage",2);
+          json.put("monomerBatteryUnderVoltage", 2);
         } else if (minCellVoltage < 2400 ) {
-          json.put("monomerBatteryUnderVoltage",1);
+          json.put("monomerBatteryUnderVoltage", 1);
         }
       }
 
@@ -356,17 +353,17 @@ object Geely extends Serializable{
   }
 
   //判断单体电池过压
-  def isMonomerBatteryOverVoltage(json:JSONObject){
+  def isMonomerBatteryOverVoltage(json: JSONObject){
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
 
     if (maxCellVoltage != null  &&   maxCellVoltage <= 4700) {
         if (maxCellVoltage > 4240) { //判断单体电池过压
-          json.put("monomerBatteryOverVoltage",3);
+          json.put("monomerBatteryOverVoltage", 3);
         } else if (maxCellVoltage > 4230) {
-          json.put("monomerBatteryOverVoltage",2);
+          json.put("monomerBatteryOverVoltage", 2);
         } else if (maxCellVoltage > 4220) {
-          json.put("monomerBatteryOverVoltage",1);
+          json.put("monomerBatteryOverVoltage", 1);
         }
     }
 
@@ -384,19 +381,19 @@ object Geely extends Serializable{
 
       if (avgTemperature > 0) {            //判断总电池欠压
         if(totalVoltage < 204000 && totalVoltage >= minVoltage_cellCount ){
-          json.put("deviceTypeUnderVoltage",3);
+          json.put("deviceTypeUnderVoltage", 3);
         }else if(totalVoltage < 249900  && totalVoltage >= minVoltage_cellCount  ){
-          json.put("deviceTypeUnderVoltage",2);
+          json.put("deviceTypeUnderVoltage", 2);
         }else if(totalVoltage < 265200  && totalVoltage >= minVoltage_cellCount ){
-          json.put("deviceTypeUnderVoltage",1);
+          json.put("deviceTypeUnderVoltage", 1);
         }
       }else{     //当温度 <=0
         if(totalVoltage < 204000  && totalVoltage >= minVoltage_cellCount  ){
-          json.put("deviceTypeUnderVoltage",3);
+          json.put("deviceTypeUnderVoltage", 3);
         }else if(totalVoltage < 229500 && totalVoltage >= minVoltage_cellCount ){
-          json.put("deviceTypeUnderVoltage",2);
+          json.put("deviceTypeUnderVoltage", 2);
         }else if(totalVoltage < 244800 && totalVoltage >= minVoltage_cellCount ){
-          json.put("deviceTypeUnderVoltage",1);
+          json.put("deviceTypeUnderVoltage", 1);
         }
       }
 
@@ -409,11 +406,11 @@ object Geely extends Serializable{
     val totalVoltage: Integer = json.getInteger("totalVoltage")
     if(totalVoltage != null && totalVoltage <= 500000){ //筛选总体电压，
       if(totalVoltage >  432500 ){      //判断总电池过压
-        json.put("deviceTypeOverVoltage",3);
+        json.put("deviceTypeOverVoltage", 3);
       }else if( totalVoltage > 431500 ){
-        json.put("deviceTypeOverVoltage",2);
+        json.put("deviceTypeOverVoltage", 2);
       }else if( totalVoltage > 430400 ){
-        json.put("deviceTypeOverVoltage",1);
+        json.put("deviceTypeOverVoltage", 1);
       }
     }
   }
@@ -442,9 +439,9 @@ object Geely extends Serializable{
     if(maxCellVoltage != null && minCellVoltage != null && current != null) {
       var diff = maxCellVoltage - minCellVoltage;
       if(diff > 600){
-        json.put("batteryConsistencyPoor",3);
+        json.put("batteryConsistencyPoor", 3);
       }else if(diff > 500){
-        json.put("batteryConsistencyPoor",2);
+        json.put("batteryConsistencyPoor", 2);
       }else if(diff > 400){
         json.put("batteryConsistencyPoor",1);
       }

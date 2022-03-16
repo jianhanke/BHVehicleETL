@@ -28,7 +28,7 @@ object MathFuncs {
   def main(args: Array[String]): Unit = {
 
     //val result: Double = calculateSoc(19, 3947)
-      //println("result:"+result);
+      //println("result: "+result);
     val socMax: Double = linearInsertion(3984, 80, 3938, 75, 3947)
     // println("socMax："+  socMax)
 
@@ -40,7 +40,7 @@ object MathFuncs {
 
   }
 
-  def calculateQuartile(arr:Array[Int])={
+  def calculateQuartile(arr: Array[Int])={
 
     val array: Array[Int] = arr.sortWith(_ < _)
     val x1: Double =  1 * (array.length-1) / 4.0
@@ -57,13 +57,13 @@ object MathFuncs {
     ((array(x1IntPart + 1) - array(x1IntPart)) * x1DecPart + array(x1IntPart),(array(x3IntPart + 1) - array(x3IntPart)) * x3DecPart + array(x3IntPart))
   }
 
-  def linearInsertion (x0: Double,y0: Double,x1: Double,y1: Double,x:Int ): Double ={
+  def linearInsertion (x0: Double,y0: Double,x1: Double,y1: Double,x: Int ): Double ={
 
     return (x - x1) / (x0 - x1) * y0 + (x - x0) / (x1 - x0) * y1
 
   }
 
-  def calculateSoc(temperature:Integer, voltage:Integer): Double ={
+  def calculateSoc(temperature: Integer, voltage: Integer): Double ={
 
     val voltageArray = socVoltageArray(getTemperatureIndex(temperature))
     if(voltage <= voltageArray(voltageArray.length - 1) ){
@@ -83,7 +83,7 @@ object MathFuncs {
 
 
 
-  def getTemperatureIndex(temperature:Integer): Integer ={
+  def getTemperatureIndex(temperature: Integer): Integer ={
 
     if(temperature > 55)
       return 0;

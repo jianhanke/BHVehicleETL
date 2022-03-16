@@ -57,7 +57,7 @@ object WarningSteaming  extends Serializable{
     )
 
 
-    def parseCity(lon: lang.Double, lat: lang.Double) :String ={
+    def parseCity(lon: lang.Double, lat: lang.Double): String ={
       var locate = " , , , "
       if(lon != null && lat != null) {
         locate = locateCityRDD(lon / 1000000, lat / 1000000, bc_df_gps.value)
@@ -65,9 +65,9 @@ object WarningSteaming  extends Serializable{
       locate
     }
 
-    def getAlarms(json :JSONObject) :ArrayBuffer[(String,Integer)] ={
+    def getAlarms(json: JSONObject): ArrayBuffer[(String, Integer)] ={
 
-      val array = scala.collection.mutable.ArrayBuffer[(String,Integer)]()
+      val array = scala.collection.mutable.ArrayBuffer[(String, Integer)]()
       val vehicleFactory: Integer = json.getInteger("vehicleFactory")
       var level = json.getIntValue("level")
 
@@ -132,17 +132,17 @@ object WarningSteaming  extends Serializable{
     val persistsData: DStream[String] = vehicleData.persist(StorageLevel.MEMORY_ONLY)
 
 
-    val lines :DStream[((String,String),Alarm)] =  persistsData.mapPartitions(
+    val lines: DStream[((String, String), Alarm)] =  persistsData.mapPartitions(
       iterable =>{
-          var alarms = new ArrayBuffer[((String,String),Alarm)]()
+          var alarms = new ArrayBuffer[((String, String), Alarm)]()
           iterable.foreach( line => {
 
             val json: JSONObject = JSON.parseObject(line)
             var all_alarms: ArrayBuffer[(String, Integer)] = getAlarms(json)
 
             if(! all_alarms.isEmpty){
-              var alarmBean = parseAlarm(json ,parseCity(json.getDouble("longitude"),json.getDouble("latitude")))
-              for( (alarm_type,alarm_level) <- all_alarms ){
+              var alarmBean = parseAlarm(json, parseCity(json.getDouble("longitude"), json.getDouble("latitude")))
+              for( (alarm_type, alarm_level) <- all_alarms ){
                   var clone: Alarm = alarmBean.clone()
                   clone.alarm_type = alarm_type
                   clone.level = alarm_level
@@ -160,18 +160,18 @@ object WarningSteaming  extends Serializable{
        * key    DStream的key数据类型
        * values DStream的value数据类型
        *  state  是StreamingContext中之前该key的状态值
-       *  (key,alarm,是否插入,是否更新)无则插入，有则更新
+       *  (key, alarm, 是否插入, 是否更新)无则插入，有则更新
        */
 
-    val func_alarm_divide = (key :(String,String),values :Option[Alarm],state :State[Alarm]) =>{
+    val func_alarm_divide = (key: (String, String), values: Option[Alarm], state: State[Alarm]) =>{
 
       var last_alarm: Alarm = state.getOption().getOrElse(null)
-      var cur_alarm :Alarm = values.get
+      var cur_alarm: Alarm = values.get
 
       if(last_alarm==null){
         // 无需连续两次
         if( cur_alarm.alarm_type.equals("socHigh") || cur_alarm.alarm_type.equals("socNotBalance")   || cur_alarm.alarm_type.equals("insulation") ){  //单独判断，则永远无法判断。
-          (cur_alarm,true);
+          (cur_alarm, true);
         }else {
           state.update(cur_alarm);
           (cur_alarm, false);
@@ -241,8 +241,8 @@ object WarningSteaming  extends Serializable{
                       record._1.total_voltage_drop_rate,record._1.max_temperature_heating_rate,record._1.soc_high_value,
                       record._1.soc_diff_value,record._1.soc_jump_value,record._1.soc_jump_time,record._1.battery_standing_time,
                       record._1.temperature_diff,record._1.insulation_om_v,
-                      record._1.voltage_uppder_boundary:Double,record._1.voltage_down_boundary:Double,
-                      record._1.temperature_uppder_boundary:Double,record._1.temperature_down_boundary:Double,
+                      record._1.voltage_uppder_boundary,record._1.voltage_down_boundary,
+                      record._1.temperature_uppder_boundary,record._1.temperature_down_boundary,
                       record._1.soc_notbalance_time,record._1.soc_high_time,record._1.last_alarm_time,
                       record._1.longitude,record._1.latitude,record._1.speed
                     )
@@ -274,29 +274,29 @@ object WarningSteaming  extends Serializable{
   }
 
 
-  def parseAlarm(json :JSONObject, cityStr :String) :Alarm ={
+  def parseAlarm(json: JSONObject, cityStr: String): Alarm ={
 
     val vehicleFactory: Int = json.getInteger("vehicleFactory")
 
     if(vehicleFactory != 5){
-      json.put("ctime",mkctime(json.getInteger("year")
-        ,json.getInteger("month")
-        ,json.getInteger("day")
-        ,json.getInteger("hours")
-        ,json.getInteger("minutes")
-        ,json.getInteger("seconds")));
+      json.put("ctime", mkctime(json.getInteger("year")
+        , json.getInteger("month")
+        , json.getInteger("day")
+        , json.getInteger("hours")
+        , json.getInteger("minutes")
+        , json.getInteger("seconds")));
     }
 
     // (i18n_内蒙古自治区,i18n_巴彦淖尔市,i18n_磴口县,north,1.8326636882091768E7)
     //  , , ,
     // (i18n_内蒙古自治区,i18n_巴彦淖尔市,i18n_磴口县,north,1.8326636882091768E7)
     val cityArray: Array[String] = cityStr.split(",")
-    json.put("province",cityArray(0));
-    json.put("city",cityArray(1));
-    json.put("area",cityArray(2));
-    json.put("region",cityArray(3));
+    json.put("province", cityArray(0));
+    json.put("city", cityArray(1));
+    json.put("area", cityArray(2));
+    json.put("region", cityArray(3));
 
-    JSON.toJavaObject(json,classOf[Alarm])
+    JSON.toJavaObject(json, classOf[Alarm])
   }
 
 
