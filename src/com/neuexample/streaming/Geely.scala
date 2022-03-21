@@ -25,39 +25,35 @@ object Geely extends Serializable{
   val func_state_geely = (key: String, values: Option[JSONObject], state: State[JSONObject] ) => {
 
 
-    val old_obj: JSONObject = state.getOption().getOrElse(null)
-    val obj: JSONObject = values.get
+    val old_json: JSONObject = state.getOption().getOrElse(null)
+    val json: JSONObject = values.get
 
 
-    if(old_obj != null){
-      isSocHigh(old_obj, obj);
-      isSocNotBalance(old_obj, obj);
-      isElectricBoxWithWater(old_obj, obj);
-      isSocJump(old_obj, obj);
-      isBatteryHighTemperature(old_obj, obj);
+    if(old_json != null){
+      isSocHigh(old_json, json);
+      isSocNotBalance(old_json, json);
+      isElectricBoxWithWater(old_json, json);
+      isSocJump(old_json, json);
+      isBatteryHighTemperature(old_json, json);
 
-      isAbnormalCollect(old_obj, obj);
-      isInsulation(old_obj, obj);
+      isAbnormalCollect(old_json, json);
+      isInsulation(old_json, json);
     }
-    state.update(obj);
-    obj.toString;
+    state.update(json);
+    json.toString;
   }
 
 
   def addGeelyAlarm(persistsParts: DStream[String]): DStream[(String, JSONObject)] = {
 
-    val vin2Json: DStream[(String, JSONObject)] = persistsParts.map {
+     persistsParts.map {
 
       line => {
 
         val json: JSONObject = JSON.parseObject(line)
 
-        json.put("ctime", mkctime(json.getInteger("year")
-          , json.getInteger("month")
-          , json.getInteger("day")
-          , json.getInteger("hours")
-          , json.getInteger("minutes")
-          , json.getInteger("seconds")));
+        json.put("ctime",
+          mkctime(json.getInteger("year"), json.getInteger("month"), json.getInteger("day"), json.getInteger("hours"), json.getInteger("minutes"), json.getInteger("seconds")));
 
 
         isMonomerBatteryUnderVoltage(json);
@@ -68,7 +64,7 @@ object Geely extends Serializable{
         isBatteryConsistencyPoor(json);
 
 
-        isOutFactorySafetyInspection(json);
+         isOutFactorySafetyInspection(json);
 
        //  isAbnormalTemperature(json);
        //  isAbnormalVoltage(json);
@@ -76,7 +72,6 @@ object Geely extends Serializable{
         (json.getString("vin"), json);
       }
     }
-    vin2Json
 
 
   }
@@ -449,6 +444,10 @@ object Geely extends Serializable{
 
   }
 
+  /*
+      把二级报警去掉
+   */
+
   def isOutFactorySafetyInspection(json: JSONObject){
 
     val maxCellVoltage: Integer = json.getInteger("batteryMaxVoltage")
@@ -461,15 +460,16 @@ object Geely extends Serializable{
       if (current >= -2000 && current <= 2000) {
         if(diff > 60  ){
           json.put("outFactorySafetyInspection", 2);
-        }else if( diff >30  ){
+        }/* else if( diff >30  ){
           json.put("outFactorySafetyInspection", 1);
-        }
+        } */
       } else {
         if(diff > 90 ){
           json.put("outFactorySafetyInspection", 2);
-        }else if( diff >60  ){
+        }/* else if( diff >60  ){
           json.put("outFactorySafetyInspection", 1);
         }
+        */
       }
 
     }

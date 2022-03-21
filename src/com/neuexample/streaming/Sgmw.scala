@@ -14,8 +14,8 @@ object Sgmw extends Serializable{
 
 
   def addSgmwAlarm(persistsParts: DStream[String]): DStream[String]= {
-    val value: DStream[String] = persistsParts.map {
 
+     persistsParts.map {
       line => {
         val json: JSONObject = JSON.parseObject(line)
 
@@ -41,7 +41,7 @@ object Sgmw extends Serializable{
         json.toString
       }
     }
-    value
+
   }
 
 
