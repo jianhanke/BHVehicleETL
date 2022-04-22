@@ -286,6 +286,8 @@ object Geely extends Serializable{
     var insulationCount: Int = old_json.getIntValue("insulationCount")
     var level = 0;
 
+    json.put("insulation", false);
+
     if(insulationResistance != null && totalVoltage != null && insulationResistance > 0  ){
       if(totalVoltage <= 1000000) {
         if (insulationResistance / (totalVoltage / 1000.0) < 100) {

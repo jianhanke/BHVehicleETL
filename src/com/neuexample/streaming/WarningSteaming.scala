@@ -246,7 +246,7 @@ object WarningSteaming  extends Serializable{
                       record._1.soc_notbalance_time,record._1.soc_high_time,record._1.last_alarm_time,
                       record._1.longitude,record._1.latitude,record._1.speed
                     )
-                   println(insert_sql);
+                   // println(insert_sql);
                   conn.prepareStatement(insert_sql).executeUpdate()
                 }
 
