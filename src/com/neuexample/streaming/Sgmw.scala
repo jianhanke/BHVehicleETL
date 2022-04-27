@@ -2,6 +2,8 @@ package com.neuexample.streaming
 
 
 import com.alibaba.fastjson.{JSON, JSONObject}
+import com.neuexample.entry.AlarmEnum
+import com.neuexample.streaming.CommonVehicle._
 import org.apache.spark.streaming.dstream.DStream
 
 object Sgmw extends Serializable{
@@ -19,24 +21,31 @@ object Sgmw extends Serializable{
       line => {
         val json: JSONObject = JSON.parseObject(line)
 
-        isMonomerBatteryUnderVoltage(json);
-        isMonomerBatteryOverVoltage(json);
-        isDeviceTypeUnderVoltage(json);
-        isDeviceTypeOverVoltage(json);
+        //采集类故障先判定
+        isTempLineFall(json)//温感采集线脱落报警
+        isTempAbnormal(json)//温度异常
+        isVoltagelinefFall(json)//电压采集线脱落报警
+        isVoltageAbnormal(json) //电压异常
+        isCellVoltageNeighborFault(json) //相邻单体数据采集异常
 
-        isInsulationAlarm(json);
+        if (json.getIntValue(AlarmEnum.tempLineFall.toString) != 2 && json.getIntValue(AlarmEnum.abnormalTemperature.toString) != 2){
+          isBatteryHighTemperature(json);
+        }
 
-        isBatteryHighTemperature(json);
+        if (json.getIntValue(AlarmEnum.voltageLineFall.toString) != 2 && json.getIntValue(AlarmEnum.abnormalVoltage.toString) != 2 && json.getIntValue(AlarmEnum.isAdjacentMonomerAbnormal.toString) != 2){
+          isMonomerBatteryUnderVoltage(json);
+          isMonomerBatteryOverVoltage(json);
+          isDeviceTypeUnderVoltage(json);
+          isDeviceTypeOverVoltage(json);
 
-        isBatteryConsistencyPoor(json);
-
+          isBatteryConsistencyPoor(json);
+        }
         isSocLow(json);
+        isInsulationAlarm(json);
 
         isSocHigh(json);  // 置为空
         isSocJump(json);  //  置为空
         isTemperatureDifferential(json)  //  置为空
-
-
 
         json.toString
       }

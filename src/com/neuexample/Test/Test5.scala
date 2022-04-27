@@ -18,43 +18,16 @@ object Test5 {
     val json: JSONObject = JSON.parseObject(str)
 
 
-    val hanke: lang.Double = json.getDouble("peisheng")
-    if(hanke == null){
+    val arra = Array(1,2,3,4,5,6)
 
-    }else{
-      println("is not null");
-    }
+    val array = Array[Int]()
+    println(arra.length)
+    println(arra.isEmpty)
+    println(arra.nonEmpty)
 
+    val ints: Array[Int] = arra.filter( _ > 2 )
+    println(ints.mkString(","))
 
-    json.put("soc_high_value",1.999999);
-    json.put("soc_jump_time",21321);
-
-    val alarm: Alarm = JSON.toJavaObject(json,classOf[Alarm])
-
-    println(alarm.soc_high_value)
-    println(alarm.soc_jump_time)
-
-
-    //val value: Class[Alarm2] = classOf[Alarm2]
-
-    //val fields: Array[Field] = alarm.getClass.getDeclaredFields
-
-
-//    println(alarm.vin)
-//    println(alarm.probeTemperatures)
-//    println(alarm.time)
-//    println(alarm.current);
-//    println(alarm.soc_high_value);
-//    println(alarm.soc_high_time)
-//
-//    println(alarm.ctime)
-//    println(alarm.start_time)
-//
-    //val fields: Array[Field] = classOf[Alarm3].getDeclaredFields
-
-//    println(fields.length)
-//    //fields2Scala(fields);
-//    fields2Java(fields);
 
   }
 

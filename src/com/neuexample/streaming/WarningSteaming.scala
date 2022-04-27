@@ -34,7 +34,7 @@ object WarningSteaming  extends Serializable{
       .appName("SparkStreamingKafkaDirexct")
       .getOrCreate()
 
-     spark.sparkContext.setLogLevel("ERROR")
+     spark.sparkContext.setLogLevel("WARN")
 
     val ssc =  new StreamingContext(spark.sparkContext, batchDuration = Seconds(2))
     ssc.checkpoint(properties.getProperty("checkpoint.dir"));
@@ -44,6 +44,7 @@ object WarningSteaming  extends Serializable{
     //alarm监控列表
     val all_alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage,abnormalCollect"
     val bc_all_alarms: Broadcast[Set[String]] = ssc.sparkContext.broadcast(all_alarms.split(",").toSet)
+    val bc_tableName: Broadcast[String] = ssc.sparkContext.broadcast(properties.getProperty("mysql.offline.table"))
 
     // Kafka配置参数
     val kafkaParams: Map[String, Object] = Map[String, Object](
@@ -100,26 +101,17 @@ object WarningSteaming  extends Serializable{
 
     val persistsParts: DStream[String] = initStream.map(_.value()).persist(StorageLevel.MEMORY_ONLY)
 
-
-    val geelyVehicldes: DStream[String] = persistsParts.filter( line => {
-      val json: JSONObject = JSON.parseObject(line)
-        json.getString("vehicleFactory").equals("5")
-    })
-
-
     val sgmwVehicles: DStream[String] = persistsParts.filter(line => {
       JSON.parseObject(line).getIntValue("vehicleFactory") == 1
     })
-
 
     val geelyVehicles: DStream[String] = persistsParts.filter( line => {
       JSON.parseObject(line).getIntValue("vehicleFactory") == 5
     })
 
-
     val otherVehicles: DStream[String] = persistsParts.filter(line => {
       var vehicleFactory: Int = JSON.parseObject(line).getIntValue("vehicleFactory")
-      !(vehicleFactory == 1 || vehicleFactory == 5 || vehicleFactory ==2 )
+      !(vehicleFactory == 1 || vehicleFactory == 5 || vehicleFactory == 2 || vehicleFactory == 6)
     })
 
 
@@ -127,7 +119,6 @@ object WarningSteaming  extends Serializable{
     val geelyData: DStream[String] = addGeelyApi(geelyVehicles)
 
     val vehicleData: DStream[String] = otherVehicles.union(sgmwData).union(geelyData)
-    // val vehicleData: DStream[String] = geelyData.union(sgmwData)
 
     val persistsData: DStream[String] = vehicleData.persist(StorageLevel.MEMORY_ONLY)
 
@@ -216,8 +207,9 @@ object WarningSteaming  extends Serializable{
               partitions.foreach(record => {
                 //插入
                 if(record._2 == true) {
-                  val insert_sql = "insert into app_alarm_divide_dwd(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
-                    .format(record._1.vin
+                  val insert_sql = "insert into %s(uuid,vin,start_time,alarm_type,end_time,city,province,area,region,level,vehicle_factory,chargeStatus,mileage,voltage,current,soc,dcStatus,insulationResistance,maxVoltageSystemNum,maxVoltagebatteryNum,batteryMaxVoltage ,minVoltageSystemNum,minVoltagebatteryNum,batteryMinVoltage,maxTemperatureSystemNum,maxTemperatureNum,maxTemperature,minTemperatureSystemNum,minTemperatureNum,minTemperature,temperatureProbeCount,probeTemperatures,cellCount,cellVoltages,total_voltage_drop_rate,max_temperature_heating_rate,soc_high_value,soc_diff_value,soc_jump_value,soc_jump_time,battery_standing_time,temperature_diff,insulation_om_v,voltage_uppder_boundary,voltage_down_boundary,temperature_uppder_boundary,temperature_down_boundary,soc_notbalance_time,soc_high_time,last_alarm_time,longitude,latitude,speed) values(uuid(),'%s',%s,'%s',%s,'%s','%s','%s','%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'%s',%s,'%s',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                    .format(
+                      bc_tableName.value, record._1.vin
                       , record._1.start_time
                       , record._1.alarm_type
                       , record._1.ctime

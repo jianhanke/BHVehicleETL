@@ -4,10 +4,12 @@ package com.neuexample.streaming
 import java.lang
 
 import com.alibaba.fastjson.{JSON, JSONObject}
+import com.neuexample.entry.AlarmEnum
 import com.neuexample.utils.MathFuncs._
 import com.neuexample.utils.CommonFuncs.{mkctime, _}
 import org.apache.spark.streaming.{State, StateSpec}
 import org.apache.spark.streaming.dstream.{DStream, MapWithStateDStream}
+import com.neuexample.streaming.CommonVehicle._
 
 object Geely extends Serializable{
 
@@ -34,7 +36,10 @@ object Geely extends Serializable{
       isSocNotBalance(old_json, json);
       isElectricBoxWithWater(old_json, json);
       isSocJump(old_json, json);
-      isBatteryHighTemperature(old_json, json);
+
+      if (json.getIntValue(AlarmEnum.tempLineFall.toString) != 2 && json.getIntValue(AlarmEnum.abnormalTemperature.toString) != 2){
+        isBatteryHighTemperature(old_json, json);
+      }
 
       isAbnormalCollect(old_json, json);
       isInsulation(old_json, json);
@@ -55,16 +60,23 @@ object Geely extends Serializable{
         json.put("ctime",
           mkctime(json.getInteger("year"), json.getInteger("month"), json.getInteger("day"), json.getInteger("hours"), json.getInteger("minutes"), json.getInteger("seconds")));
 
+        //采集类故障先判定
+        isTempLineFall(json)//温感采集线脱落报警
+        isTempAbnormal(json)//温度异常
+        isVoltagelinefFall(json)//电压采集线脱落报警
+        isVoltageAbnormal(json) //电压异常
+        isCellVoltageNeighborFault(json) //相邻单体数据采集异常
 
-        isMonomerBatteryUnderVoltage(json);
-        isMonomerBatteryOverVoltage(json);
-        isDeviceTypeUnderVoltage(json);
-        isDeviceTypeOverVoltage(json);
+        if (json.getIntValue(AlarmEnum.voltageLineFall.toString) != 2 && json.getIntValue(AlarmEnum.abnormalVoltage.toString) != 2 && json.getIntValue(AlarmEnum.isAdjacentMonomerAbnormal.toString) != 2){
+          isMonomerBatteryUnderVoltage(json);
+          isMonomerBatteryOverVoltage(json);
+          isDeviceTypeUnderVoltage(json);
+          isDeviceTypeOverVoltage(json);
 
-        isBatteryConsistencyPoor(json);
+          isBatteryConsistencyPoor(json);
 
-
-         isOutFactorySafetyInspection(json);
+          isOutFactorySafetyInspection(json);
+        }
 
        //  isAbnormalTemperature(json);
        //  isAbnormalVoltage(json);
