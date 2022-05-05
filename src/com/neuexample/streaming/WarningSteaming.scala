@@ -38,9 +38,8 @@ object WarningSteaming  extends Serializable{
 
     val ssc =  new StreamingContext(spark.sparkContext, batchDuration = Seconds(2))
     ssc.checkpoint(properties.getProperty("checkpoint.dir"));
-
-    val df_gps = spark.sparkContext.textFile("gps.csv").cache()
-    val bc_df_gps = ssc.sparkContext.broadcast(df_gps.collect())
+    // gps
+    val bc_df_gps = ssc.sparkContext.broadcast(spark.sparkContext.textFile("gps.csv").cache().collect())
     //alarm监控列表
     val bc_all_alarms: Broadcast[Set[String]] = ssc.sparkContext.broadcast(AlarmEnum.AlarmEnumConvertToSet)
     // 输出mysql警告表
@@ -66,9 +65,10 @@ object WarningSteaming  extends Serializable{
       locate
     }
 
-    def getAlarms(json: JSONObject): ArrayBuffer[(String, Integer)] ={
+    def getAlarms(line: String): ArrayBuffer[((String, String), Alarm)] ={
 
-      val array = scala.collection.mutable.ArrayBuffer[(String, Integer)]()
+      val json: JSONObject = JSON.parseObject(line)
+      val alarm2Level = scala.collection.mutable.ArrayBuffer[(String, Integer)]()
       val vehicleFactory: Integer = json.getInteger("vehicleFactory")
       var level = json.getIntValue("level")
 
@@ -76,7 +76,7 @@ object WarningSteaming  extends Serializable{
         for(alarm_type <- bc_all_alarms.value){
           level = json.getIntValue(alarm_type)
           if(level != 0){
-            array += Tuple2(alarm_type, level);
+            alarm2Level += Tuple2(alarm_type, level);
           }
         }
       }else{
@@ -85,11 +85,24 @@ object WarningSteaming  extends Serializable{
         }
         for(alarm_type <- bc_all_alarms.value){
           if(json.getBooleanValue(alarm_type)){
-            array += Tuple2(alarm_type, level);
+            alarm2Level += Tuple2(alarm_type, level);
           }
         }
       }
-      array
+
+      val result = new ArrayBuffer[((String, String), Alarm)](alarm2Level.length)
+
+      if(alarm2Level.nonEmpty){
+        var alarmBean = parseAlarm(json, parseCity(json.getDouble("longitude"), json.getDouble("latitude")))
+        for( (alarm_type, alarm_level) <- alarm2Level ){
+          var clone: Alarm = alarmBean.clone()
+          clone.alarm_type = alarm_type
+          clone.level = alarm_level
+          result.append(((clone.vin, clone.alarm_type), clone))
+        }
+      }
+
+      result
     }
 
     // 用Kafka Direct API直接读数据
@@ -127,20 +140,7 @@ object WarningSteaming  extends Serializable{
       iterable =>{
           var alarms = new ArrayBuffer[((String, String), Alarm)]()
           iterable.foreach( line => {
-
-            val json: JSONObject = JSON.parseObject(line)
-            var all_alarms: ArrayBuffer[(String, Integer)] = getAlarms(json)
-
-            if(all_alarms.nonEmpty){
-              var alarmBean = parseAlarm(json, parseCity(json.getDouble("longitude"), json.getDouble("latitude")))
-              for( (alarm_type, alarm_level) <- all_alarms ){
-                  var clone: Alarm = alarmBean.clone()
-                  clone.alarm_type = alarm_type
-                  clone.level = alarm_level
-                  alarms.append(((clone.vin, clone.alarm_type), clone))
-              }
-            }
-
+            alarms ++= getAlarms(line)
           }
         )
         alarms.iterator
@@ -238,7 +238,7 @@ object WarningSteaming  extends Serializable{
                       record._1.soc_notbalance_time,record._1.soc_high_time,record._1.last_alarm_time,
                       record._1.longitude,record._1.latitude,record._1.speed
                     )
-                   // println(insert_sql);
+                    println(insert_sql);
                   conn.prepareStatement(insert_sql).executeUpdate()
                 }
 

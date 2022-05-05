@@ -1,23 +1,21 @@
 package com.neuexample.Test
 
+import com.neuexample.entry.Alarm
+
+import scala.collection.mutable.ArrayBuffer
+
 object MyTest {
 
   def main(args: Array[String]): Unit = {
 
 
+    var alarms = new ArrayBuffer[String](100)
 
-    val array = Array(("1","2","3","4",5.0),("1","2","3","4",6.0))
+    val aaa: Array[String] =new  Array[String](0)
 
-    val tuple1: Array[(String, String, String, String, Double)] = array.take(1)
+    val arr = new Array[Int](10)
 
-    val tuple2: (String, String, String, String, Double) = array(0)
-
-    println(tuple1.mkString(","))
-    println(tuple2.toString())
-
-
-
-
+    arr
 
   }
 
