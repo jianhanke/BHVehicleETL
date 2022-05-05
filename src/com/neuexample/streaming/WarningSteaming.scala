@@ -3,7 +3,7 @@ package com.neuexample.streaming
 import java.lang
 
 import com.alibaba.fastjson.{JSON, JSONObject}
-import com.neuexample.entry.Alarm
+import com.neuexample.entry.{Alarm, AlarmEnum}
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.streaming.{Seconds, State, StateSpec, StreamingContext}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, ConsumerStrategies, HasOffsetRanges, KafkaUtils, LocationStrategies, OffsetRange}
@@ -42,8 +42,8 @@ object WarningSteaming  extends Serializable{
     val df_gps = spark.sparkContext.textFile("gps.csv").cache()
     val bc_df_gps = ssc.sparkContext.broadcast(df_gps.collect())
     //alarm监控列表
-    val all_alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperatureData,abnormalVoltageData,abnormalCollect,isAdjacentMonomerAbnormal,abnormalTemperature,abnormalVoltage,tempLineFall,voltageLineFall"
-    val bc_all_alarms: Broadcast[Set[String]] = ssc.sparkContext.broadcast(all_alarms.split(",").toSet)
+    val bc_all_alarms: Broadcast[Set[String]] = ssc.sparkContext.broadcast(AlarmEnum.AlarmEnumConvertToSet)
+    // 输出mysql警告表
     val bc_tableName: Broadcast[String] = ssc.sparkContext.broadcast(properties.getProperty("mysql.offline.table"))
 
     // Kafka配置参数
