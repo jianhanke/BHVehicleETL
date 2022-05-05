@@ -42,7 +42,7 @@ object WarningSteaming  extends Serializable{
     val df_gps = spark.sparkContext.textFile("gps.csv").cache()
     val bc_df_gps = ssc.sparkContext.broadcast(df_gps.collect())
     //alarm监控列表
-    val all_alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltage,abnormalCollect"
+    val all_alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltageData,abnormalCollect,isAdjacentMonomerAbnormal,abnormalTemperature,abnormalVoltage,tempLineFall,voltageLineFall"
     val bc_all_alarms: Broadcast[Set[String]] = ssc.sparkContext.broadcast(all_alarms.split(",").toSet)
     val bc_tableName: Broadcast[String] = ssc.sparkContext.broadcast(properties.getProperty("mysql.offline.table"))
 
@@ -131,7 +131,7 @@ object WarningSteaming  extends Serializable{
             val json: JSONObject = JSON.parseObject(line)
             var all_alarms: ArrayBuffer[(String, Integer)] = getAlarms(json)
 
-            if(! all_alarms.isEmpty){
+            if(all_alarms.nonEmpty){
               var alarmBean = parseAlarm(json, parseCity(json.getDouble("longitude"), json.getDouble("latitude")))
               for( (alarm_type, alarm_level) <- all_alarms ){
                   var clone: Alarm = alarmBean.clone()

@@ -34,11 +34,14 @@ object Geely extends Serializable{
     if(old_json != null){
       isSocHigh(old_json, json);
       isSocNotBalance(old_json, json);
-      isElectricBoxWithWater(old_json, json);
+
       isSocJump(old_json, json);
 
       if (json.getIntValue(AlarmEnum.tempLineFall.toString) != 2 && json.getIntValue(AlarmEnum.abnormalTemperature.toString) != 2){
         isBatteryHighTemperature(old_json, json);
+      }
+      if (json.getIntValue(AlarmEnum.voltageLineFall.toString) != 2 && json.getIntValue(AlarmEnum.abnormalVoltage.toString) != 2 && json.getIntValue(AlarmEnum.isAdjacentMonomerAbnormal.toString) != 2){
+        isElectricBoxWithWater(old_json, json);
       }
 
       isAbnormalCollect(old_json, json);
@@ -61,6 +64,7 @@ object Geely extends Serializable{
           mkctime(json.getInteger("year"), json.getInteger("month"), json.getInteger("day"), json.getInteger("hours"), json.getInteger("minutes"), json.getInteger("seconds")));
 
         //采集类故障先判定
+        isTempLineFall(json)//温感采集线脱落报警
         isTempLineFall(json)//温感采集线脱落报警
         isTempAbnormal(json)//温度异常
         isVoltagelinefFall(json)//电压采集线脱落报警
@@ -102,7 +106,7 @@ object Geely extends Serializable{
       val downBoundary: Double = quartile._1 - 1.5 * IQR
 
       if( batteryMaxVoltage > upperBoundary || batteryMaxVoltage < downBoundary ||  batteryMinVoltage > upperBoundary || batteryMinVoltage < downBoundary   ){
-          json.put("abnormalVoltage", 1);
+          json.put("abnormalVoltageData", 1);
           json.put("voltage_uppder_boundary", upperBoundary)
           json.put("voltage_down_boundary", downBoundary)
       }
