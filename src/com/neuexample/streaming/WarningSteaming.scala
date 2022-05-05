@@ -42,7 +42,7 @@ object WarningSteaming  extends Serializable{
     val df_gps = spark.sparkContext.textFile("gps.csv").cache()
     val bc_df_gps = ssc.sparkContext.broadcast(df_gps.collect())
     //alarm监控列表
-    val all_alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperature,abnormalVoltageData,abnormalCollect,isAdjacentMonomerAbnormal,abnormalTemperature,abnormalVoltage,tempLineFall,voltageLineFall"
+    val all_alarms = "batteryHighTemperature,socJump,socHigh,monomerBatteryUnderVoltage,monomerBatteryOverVoltage,deviceTypeUnderVoltage,deviceTypeOverVoltage,batteryConsistencyPoor,insulation,socLow,temperatureDifferential,voltageJump,socNotBalance,electricBoxWithWater,outFactorySafetyInspection,abnormalTemperatureData,abnormalVoltageData,abnormalCollect,isAdjacentMonomerAbnormal,abnormalTemperature,abnormalVoltage,tempLineFall,voltageLineFall"
     val bc_all_alarms: Broadcast[Set[String]] = ssc.sparkContext.broadcast(all_alarms.split(",").toSet)
     val bc_tableName: Broadcast[String] = ssc.sparkContext.broadcast(properties.getProperty("mysql.offline.table"))
 
@@ -171,7 +171,7 @@ object WarningSteaming  extends Serializable{
 
         if(  math.abs(cur_alarm.start_time - last_alarm.start_time)  < 20 ) {
 
-          if( cur_alarm.alarm_type.equals("abnormalTemperature") || cur_alarm.alarm_type.equals("abnormalVoltage") ){
+          if( cur_alarm.alarm_type.equals("abnormalTemperatureData") || cur_alarm.alarm_type.equals("abnormalVoltageData") ){
 
             cur_alarm.level=cur_alarm.level + last_alarm.level;
             if(cur_alarm.level==5){

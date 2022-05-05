@@ -128,7 +128,7 @@ object Geely extends Serializable{
       var upperBoundary = quartile._2 + 1.5 * IQR;
       val downBoundary: Double = quartile._1 - 1.5 * IQR
       if( maxTemperature > upperBoundary || maxTemperature < downBoundary ||  minTemperature > upperBoundary || minTemperature < downBoundary   ){
-        json.put("abnormalTemperature", 1);
+        json.put("abnormalTemperatureData", 1);
         json.put("temperature_uppder_boundary", upperBoundary);
         json.put("temperature_down_boundary", downBoundary);
       }

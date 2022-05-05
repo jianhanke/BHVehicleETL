@@ -21,7 +21,7 @@ object AlarmEnum  extends  Enumeration{
   val socNotBalance=Value("socNotBalance")//soc不平衡
   val electricBoxWithWater=Value("electricBoxWithWater")//电箱进水
   val outFactorySafetyInspection=Value("outFactorySafetyInspection")//出场安全检查
-  val abnormalTemperature=Value("abnormalTemperature")//温度异常
+  val abnormalTemperature=Value("abnormalTemperatureData")//温度数据异常
   val abnormalVoltageData=Value("abnormalVoltageData")//电压数据异常
   val abnormalVoltage=Value("abnormalVoltage")//电压异常
   val voltageLineFall=Value("voltageLineFall")//电压采集线脱落
