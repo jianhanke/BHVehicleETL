@@ -61,9 +61,9 @@ object Sgmw extends Serializable{
     val insulationResistance: Integer = json.getInteger("insulationResistance")
 
     if(insulationResistance != null  && insulationResistance > 0 ) {
-      if (insulationResistance <= 40000) {
+      if (insulationResistance <= 40) {
         json.put("insulation", 2);
-      } else if (insulationResistance <= 100000) {
+      } else if (insulationResistance <= 100) {
         json.put("insulation", 1);
       }
     }

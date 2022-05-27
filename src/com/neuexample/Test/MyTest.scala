@@ -15,7 +15,7 @@ object MyTest {
 
     val arr = new Array[Int](10)
 
-    arr
+
 
   }
 

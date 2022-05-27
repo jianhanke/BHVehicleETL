@@ -189,7 +189,7 @@ object Geely extends Serializable{
     val old_ctime: Integer = old_json.getInteger("ctime")
 
     if(batteryMaxVoltage != null && batteryMinVoltage != null && totalVoltage != null  && batteryMaxVoltage - batteryMinVoltage >= 400
-      && insulationResistance != null && insulationResistance / (totalVoltage / 1000.0) <= 500 && maxTemperature != null && old_maxTemperature != null )
+      && insulationResistance != null && (insulationResistance * 1000) / (totalVoltage / 1000.0) <= 500 && maxTemperature != null && old_maxTemperature != null )
       {
         val temperatureDiff: Integer = math.abs(maxTemperature-old_maxTemperature)
         if(  temperatureDiff > 30 || maxTemperature == 87   ){     //删除87度
@@ -221,7 +221,7 @@ object Geely extends Serializable{
 
     if(totalVoltage != null && totalVoltage >= 100000 && totalVoltage <= 500000
       && old_totalVoltage != null && old_totalVoltage >= 100000 && old_totalVoltage <= 500000
-      && insulationResistance != null && insulationResistance / ( totalVoltage / 1000.0) < 500
+      && insulationResistance != null && (insulationResistance * 1000 ) / ( totalVoltage / 1000.0) < 500
       && secondsDiff > 0 &&  secondsDiff <= 15
       &&  (totalVoltage - old_totalVoltage) / 1000.0 / secondsDiff > 0.05 )
     {
@@ -306,20 +306,20 @@ object Geely extends Serializable{
 
     if(insulationResistance != null && totalVoltage != null && insulationResistance > 0  ){
       if(totalVoltage <= 1000000) {
-        if (insulationResistance / (totalVoltage / 1000.0) < 100) {
+        if ( (insulationResistance * 1000) / (totalVoltage / 1000.0) < 100) {
           level = 3;
           insulationCount += 1;
-        } else if (insulationResistance / (totalVoltage / 1000.0) < 500) {
+        } else if (  (insulationResistance * 1000) / (totalVoltage / 1000.0) < 500) {
           level = 2;
           insulationCount += 1;
         }else{
           insulationCount -= 1;
         }
       }else{
-        if(insulationResistance < 35000 ){
+        if(insulationResistance < 35 ){
           insulationCount += 1;
           level = 3;
-        }else if(insulationResistance < 175000 ){
+        }else if(insulationResistance < 175 ){
           insulationCount += 1;
           level = 2;
         }else{

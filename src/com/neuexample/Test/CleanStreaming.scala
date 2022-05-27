@@ -250,14 +250,7 @@ object CleanStreaming extends Serializable {
   }
 
 
-  def mkctime (year:Int,month:Int,day:Int,hours:Int,minutes:Int,seconds:Int) :Long ={
 
-    try {
-      new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("20%s-%02d-%02d %02d:%02d:%02d".format(year, month, day, hours, minutes, seconds)).getTime / 1000
-    }catch {
-      case e=> return 0;
-    }
-  }
 
 
 }
